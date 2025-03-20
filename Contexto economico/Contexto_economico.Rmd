@@ -24,14 +24,35 @@ bd.pib <- read_excel("data/PIB_CR.xlsx")
 bd.pib <- bd.pib %>% filter(`Country Name` == "Costa Rica")
 
 # Se crea el nuevo DataFrame
-pib.cr <- data.frame(annos = 1995:2023,
+bd.pib <- data.frame(annos = 1995:2023,
                      pib = unlist(unname(bd.pib[, 40:68])) / 1000000)
 
 # Gráfico del PIB en Costa Rica desde 1995 hasta 2023
-ggplot(data = pib.cr, aes(x = annos, y = pib)) +
+ggplot(data = bd.pib, aes(x = annos, y = pib)) +
   geom_line(color = "chartreuse3", linewidth = 1) +
   geom_point(color = "chartreuse4", size = 1.5) +
   labs(x = "Año", y = "PIB en millones de colones", caption = "Fuente: elaboración propia") +
+  theme_minimal()
+```
+
+Se repite el proceso con el PIB per cápita.
+
+```{r PIB_per_capita}
+# Se guarda la base
+bd.capita <- read_excel("data/PIB_per_capita.xlsx")
+
+# Se filtra por Costa Rica
+bd.capita <- bd.capita %>% filter(`Country Name` == "Costa Rica")
+
+# Se crea el nuevo DataFrame
+bd.capita <- data.frame(annos = 1995:2023,
+                     pib = unlist(unname(bd.capita[, 40:68])))
+
+# Gráfico del PIB en Costa Rica desde 1995 hasta 2023
+ggplot(data = bd.capita, aes(x = annos, y = pib)) +
+  geom_line(color = "chartreuse3", linewidth = 1) +
+  geom_point(color = "chartreuse4", size = 1.5) +
+  labs(x = "Año", y = "PIB per cápita", caption = "Fuente: elaboración propia") +
   theme_minimal()
 ```
 
