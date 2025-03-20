@@ -5,3 +5,33 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+Se cargan las librerías necesarias.
+
+```{r librerias}
+pacman::p_load(dplyr,
+               ggplot2,
+               readxl)
+```
+
+
+Inicialmente, se busca hacer un gráfico representando el PIB de Costa Rica, por lo cual es necesario cargar los datos, dejar el país requerido y los años correspondientes.
+
+```{r PIB_CR}
+# Se guarda la base
+bd.pib <- read_excel("data/PIB_CR.xlsx")
+
+# Se filtra por Costa Rica
+bd.pib <- bd.pib %>% filter(`Country Name` == "Costa Rica")
+
+# Se crea el nuevo DataFrame
+pib.cr <- data.frame(annos = 1995:2023,
+                     pib = unlist(unname(bd.pib[, 40:68])) / 1000000)
+
+# Gráfico del PIB en Costa Rica desde 1995 hasta 2023
+ggplot(data = pib.cr, aes(x = annos, y = pib)) +
+  geom_line(color = "chartreuse3", linewidth = 1) +
+  geom_point(color = "chartreuse4", size = 1.5) +
+  labs(x = "Año", y = "PIB en millones de colones", caption = "Fuente: elaboración propia") +
+  theme_minimal()
+```
+
