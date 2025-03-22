@@ -13,8 +13,21 @@ pacman::p_load(dplyr,
                readxl)
 ```
 
+## Inflación
 
-Inicialmente, se busca hacer un gráfico representando el PIB de Costa Rica, por lo cual es necesario cargar los datos, dejar el país requerido y los años correspondientes.
+```{r}
+
+```
+
+## Tasas de interés
+
+```{r}
+
+```
+
+## Producto Interno Bruto
+
+Se busca hacer un gráfico representando el PIB de Costa Rica, por lo cual es necesario cargar los datos, dejar el país requerido y los años correspondientes.
 
 ```{r PIB_CR}
 # Se guarda la base
@@ -34,4 +47,13 @@ ggplot(data = bd.pib, aes(x = annos, y = pib)) +
   labs(x = "Año", y = "PIB en billones de colones", caption = "Fuente: elaboración propia") +
   theme_minimal()
 ```
+
+## Variación de salarios
+
+```{r}
+
+```
+
+
+
 
