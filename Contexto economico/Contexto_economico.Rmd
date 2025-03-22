@@ -24,14 +24,14 @@ bd.pib <- read_excel("data/PIB_CR.xlsx")
 bd.pib <- bd.pib %>% filter(`Country Name` == "Costa Rica")
 
 # Se crea el nuevo DataFrame
-bd.pib <- data.frame(annos = 1995:2023,
-                     pib = unlist(unname(bd.pib[, 40:68])) / 1000000)
+bd.pib <- data.frame(annos = 1995:2024,
+                     pib = c(unlist(unname(bd.pib[, 40:68])), 42755147159722) / 1000000000)
 
 # Gráfico del PIB en Costa Rica desde 1995 hasta 2023
 ggplot(data = bd.pib, aes(x = annos, y = pib)) +
   geom_line(color = "chartreuse3", linewidth = 1) +
   geom_point(color = "chartreuse4", size = 1.5) +
-  labs(x = "Año", y = "PIB en millones de colones", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "PIB en billones de colones", caption = "Fuente: elaboración propia") +
   theme_minimal()
 ```
 
