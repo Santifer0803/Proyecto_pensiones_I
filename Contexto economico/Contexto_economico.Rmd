@@ -18,7 +18,7 @@ pacman::p_load(dplyr,
 ```{r inflacion_cr}
 #Se cargan los datos
 inflacion <- read_excel("data/API_FP.CPI.TOTL.ZG_DS2_es_excel_v2_76102.xls")
-View(API_FP_CPI_TOTL_ZG_DS2_es_excel_v2_76102)
+
 
 #Se filtran para tener solo lo de Costa Rica
 inflacion_cr <- inflacion %>%
@@ -50,9 +50,8 @@ inflacion_cr <- inflacion_cr %>%
 ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
   geom_line(color = "blue") + 
   geom_point(color = "darkblue", size = 1.5) +
-  labs(title = "Inflación en % anual de Costa Rica", x = "Año", y = "Inflación") +
+  labs(title = "", x = "Año", y = "Inflación" ,caption = "Fuente: elaboración propia") +
   theme_minimal()
-
 ```
 
 
