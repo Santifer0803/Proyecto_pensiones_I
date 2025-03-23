@@ -15,9 +15,48 @@ pacman::p_load(dplyr,
 
 ## Inflación
 
-```{r}
+```{r inflacion_cr}
+#Se cargan los datos
+inflacion <- read_excel("data/API_FP.CPI.TOTL.ZG_DS2_es_excel_v2_76102.xls")
+View(API_FP_CPI_TOTL_ZG_DS2_es_excel_v2_76102)
+
+#Se filtran para tener solo lo de Costa Rica
+inflacion_cr <- inflacion %>%
+  filter(`Data Source` %in% c("Costa Rica", "Country Name"))
+
+inflacion_cr <- inflacion_cr[, -c(2,3, 4)]
+inflacion_cr[1, 1] <- "Año"
+
+colnames(inflacion_cr) <- as.character(inflacion_cr[1, ])  
+
+inflacion_cr <- as.data.frame(t(inflacion_cr))
+colnames(inflacion_cr) <- as.character(inflacion_cr[1, ]) 
+inflacion_cr <- inflacion_cr[-1, ]
+
+#Se agrega el valor de 2024
+
+inflacion_2024 <- data.frame("Año" = 2024, "Costa Rica" = 0.84)
+colnames(inflacion_2024) <- colnames(inflacion_cr)
+inflacion_cr <- rbind(inflacion_cr, inflacion_2024)
+
+# se reasignan las filas con numeración normal (1, 2, 3, ...)
+row.names(inflacion_cr) <- NULL
+
+# Se pasan las columnas a numérico
+inflacion_cr <- inflacion_cr %>%
+  mutate(across(c(1, 2), as.numeric))
+
+#gráfico
+ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
+  geom_line(color = "blue") + 
+  geom_point(color = "darkblue", size = 1.5) +
+  labs(title = "Inflación en % anual de Costa Rica", x = "Año", y = "Inflación") +
+  theme_minimal()
 
 ```
+
+
+
 
 ## Tasas de interés
 
