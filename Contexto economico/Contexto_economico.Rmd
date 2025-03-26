@@ -106,12 +106,13 @@ bd.ismn <- bd.ismn %>%
 # Creamos el nuevo DataFrame con el promedio de la variación mensual por año
 bd.ismn <- bd.ismn %>%
   group_by(anno) %>%
-  summarise(var_mensual = mean(var_mensual, na.rm = TRUE))
+  summarise(var_mensual = mean(var_mensual, na.rm = TRUE)) %>%
+  filter(anno >= 2000)
 
 # Eliminamos la observación del 2025 (última fila)
 bd.ismn <- bd.ismn[-nrow(bd.ismn), ]
 
-# Graficamos la variación mensual del ISMN desde 1984 hasta 2024
+# Graficamos la variación mensual del ISMN desde 2000 hasta 2024
 ggplot(bd.ismn, aes(x = anno, y = var_mensual)) +
   geom_line(color = "salmon", linewidth = 1) +
   geom_point(color = "orchid3", size = 1.5) +
@@ -130,11 +131,12 @@ bd.ismr <- bd.ismr %>%
 
 bd.ismr <- bd.ismr %>%
   group_by(anno) %>%
-  summarise(var_mensual = mean(var_mensual, na.rm = TRUE))
+  summarise(var_mensual = mean(var_mensual, na.rm = TRUE)) %>%
+  filter(anno >= 2000)
 
 bd.ismr <- bd.ismr[-nrow(bd.ismr), ]
 
-# Graficamos la variación mensual del ISMR desde 1984 hasta 2024
+# Graficamos la variación mensual del ISMR desde 2000 hasta 2024
 ggplot(bd.ismr, aes(x = anno, y = var_mensual)) +
   geom_line(color = "slateblue", linewidth = 1) +
   geom_point(color = "firebrick", size = 1.5) +
