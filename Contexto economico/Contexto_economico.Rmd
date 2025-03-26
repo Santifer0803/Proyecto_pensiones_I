@@ -1,6 +1,6 @@
 ---
-title: "Contexto_economico"
-author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erik Venegas"
+title: "Informe Contexto Económico"
+author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -10,52 +10,53 @@ Se cargan las librerías necesarias.
 ```{r librerias}
 pacman::p_load(dplyr,
                ggplot2,
-               readxl)
+               readxl,
+               lubridate)
 ```
 
 ## Inflación
 
-```{r inflacion_cr}
-#Se cargan los datos
-inflacion <- read_excel("data/API_FP.CPI.TOTL.ZG_DS2_es_excel_v2_76102.xls")
+```{r inflacion_CR}
+# Se cargan los datos
+inflacion <- suppressMessages(read_excel("data/API_FP.CPI.TOTL.ZG_DS2_es_excel_v2_76102.xls"))
 
-
-#Se filtran para tener solo lo de Costa Rica
+# Se filtran para tener solo los de Costa Rica
 inflacion_cr <- inflacion %>%
   filter(`Data Source` %in% c("Costa Rica", "Country Name"))
 
-inflacion_cr <- inflacion_cr[, -c(2,3, 4)]
+inflacion_cr <- inflacion_cr[, -c(2, 3, 4)]
 inflacion_cr[1, 1] <- "Año"
 
-colnames(inflacion_cr) <- as.character(inflacion_cr[1, ])  
+colnames(inflacion_cr) <- as.character(inflacion_cr[1, ])
 
 inflacion_cr <- as.data.frame(t(inflacion_cr))
-colnames(inflacion_cr) <- as.character(inflacion_cr[1, ]) 
+colnames(inflacion_cr) <- as.character(inflacion_cr[1, ])
 inflacion_cr <- inflacion_cr[-1, ]
 
-#Se agrega el valor de 2024
-
+# Se agrega el valor de 2024
 inflacion_2024 <- data.frame("Año" = 2024, "Costa Rica" = 0.84)
 colnames(inflacion_2024) <- colnames(inflacion_cr)
 inflacion_cr <- rbind(inflacion_cr, inflacion_2024)
 
-# se reasignan las filas con numeración normal (1, 2, 3, ...)
+# Se reasignan las filas con numeración normal (1, 2, 3, ...)
 row.names(inflacion_cr) <- NULL
 
-# Se pasan las columnas a numérico
+# Se pasan las columnas a tipo numérico
 inflacion_cr <- inflacion_cr %>%
   mutate(across(c(1, 2), as.numeric))
 
-#gráfico
+# Se crea el gráfico
 ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
-  geom_line(color = "blue") + 
+  geom_line(color = "blue") +
   geom_point(color = "darkblue", size = 1.5) +
-  labs(title = "", x = "Año", y = "Inflación" ,caption = "Fuente: elaboración propia") +
+  labs(
+    title = "",
+    x = "Año",
+    y = "Inflación",
+    caption = "Fuente: elaboración propia"
+  ) +
   theme_minimal()
 ```
-
-
-
 
 ## Tasas de interés
 
@@ -79,7 +80,7 @@ bd.pib <- data.frame(annos = 1995:2024,
                      pib = c(unlist(unname(bd.pib[, 40:68])), 42755147159722) / 1000000000)
 
 # Gráfico del PIB en Costa Rica desde 1995 hasta 2023
-ggplot(data = bd.pib, aes(x = annos, y = pib)) +
+ggplot(bd.pib, aes(x = annos, y = pib)) +
   geom_line(color = "chartreuse3", linewidth = 1) +
   geom_point(color = "chartreuse4", size = 1.5) +
   labs(x = "Año", y = "PIB en billones de colones", caption = "Fuente: elaboración propia") +
@@ -88,8 +89,57 @@ ggplot(data = bd.pib, aes(x = annos, y = pib)) +
 
 ## Variación de salarios
 
-```{r}
+```{r var_salarios}
+# Se cargan los datos del ISMN
+bd.ismn <- suppressMessages(read_excel("data/ISMN_CR.xlsx"))
 
+# Cambiamos el nombre de las columnas
+colnames(bd.ismn) <- c("fecha", "nivel", "var_mensual", "var_interanual", "var_acum")
+
+# La columna fecha es de tipo string, por lo que la convertimos a formato de fecha
+bd.ismn$fecha <- seq(as.Date("1984-01-01"), as.Date("2025-02-01"), by = "month")
+
+# Se agraga una columna con el año para cada fecha
+bd.ismn <- bd.ismn %>%
+  mutate(anno = year(fecha))
+
+# Creamos el nuevo DataFrame con el promedio de la variación mensual por año
+bd.ismn <- bd.ismn %>%
+  group_by(anno) %>%
+  summarise(var_mensual = mean(var_mensual, na.rm = TRUE))
+
+# Eliminamos la observación del 2025 (última fila)
+bd.ismn <- bd.ismn[-nrow(bd.ismn), ]
+
+# Graficamos la variación mensual del ISMN desde 1984 hasta 2024
+ggplot(bd.ismn, aes(x = anno, y = var_mensual)) +
+  geom_line(color = "salmon", linewidth = 1) +
+  geom_point(color = "orchid3", size = 1.5) +
+  labs(x = "Año", y = "Promedio de la variación mensual", caption = "Fuente: elaboración propia") +
+  theme_minimal()
+
+# Se procede a hacer lo mismo con el ISMR
+bd.ismr <- suppressMessages(read_excel("data/ISMR_CR.xlsx"))
+
+colnames(bd.ismr) <- c("fecha", "nivel", "var_mensual", "var_interanual", "var_acum")
+
+bd.ismr$fecha <- seq(as.Date("1984-01-01"), as.Date("2025-02-01"), by = "month")
+
+bd.ismr <- bd.ismr %>%
+  mutate(anno = year(fecha))
+
+bd.ismr <- bd.ismr %>%
+  group_by(anno) %>%
+  summarise(var_mensual = mean(var_mensual, na.rm = TRUE))
+
+bd.ismr <- bd.ismr[-nrow(bd.ismr), ]
+
+# Graficamos la variación mensual del ISMR desde 1984 hasta 2024
+ggplot(bd.ismr, aes(x = anno, y = var_mensual)) +
+  geom_line(color = "slateblue", linewidth = 1) +
+  geom_point(color = "firebrick", size = 1.5) +
+  labs(x = "Año", y = "Promedio de la variación mensual", caption = "Fuente: elaboración propia") +
+  theme_minimal()
 ```
 
 
