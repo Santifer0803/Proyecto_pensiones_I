@@ -16,9 +16,9 @@ pacman::p_load(dplyr,
 
 ## Inflación
 
-```{r inflacion_CR}
+```{r inflacion_CR, warning=FALSE}
 # Se cargan los datos
-inflacion <- suppressMessages(read_excel("data/API_FP.CPI.TOTL.ZG_DS2_es_excel_v2_76102.xls"))
+inflacion <- suppressMessages(read_excel("data/Inflacion_mundial.xls"))
 
 # Se filtran para tener solo los de Costa Rica
 inflacion_cr <- inflacion %>%
@@ -55,7 +55,9 @@ ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
     y = "Inflación",
     caption = "Fuente: elaboración propia"
   ) +
-  theme_minimal()
+  theme_minimal() + scale_x_continuous(limits = c(2000, max(inflacion_cr$Año)), breaks = seq(2000, max(inflacion_cr$Año), by = 5)) +
+  scale_y_continuous(limits = c(-0.1, 15), breaks = seq(0, 25, by = 5))
+
 ```
 
 ## Tasas de interés
