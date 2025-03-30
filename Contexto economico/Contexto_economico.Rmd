@@ -18,7 +18,7 @@ pacman::p_load(dplyr,
 
 ```{r inflacion_CR, warning=FALSE}
 # Se cargan los datos
-inflacion <- suppressMessages(read_excel("data/Inflacion_mundial.xls"))
+inflacion <- suppressMessages(read_excel("data/inflacion_mundial.xls"))
 
 # Se filtran para tener solo los de Costa Rica
 inflacion_cr <- inflacion %>%
