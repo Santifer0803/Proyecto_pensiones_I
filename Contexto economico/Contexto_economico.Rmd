@@ -128,15 +128,75 @@ Note entonces que en este gráfico tenemos una tendencia decreciente en promedio
 Para hacer una comparación, vamos a ver ahora la Tasa de Polítca Monetaria. 
 
 ```{r}
+library(readxl)
 data_tasa_politica <- read_excel("C:/Users/Admin/Downloads/historico_tasa_politica_monetaria.xlsx")
 ```
+
+
 
 Lo primero que vamos a realizar es un summary en la base.
 
 ```{r}
 summary(data_tasa_politica)
 ```
-De este pequeño resumen, podemos observar que los primeros años no estamos teniendo una consistencia de los datos, esto se debe
+
+
+De este pequeño resumen, podemos observar que los primeros años no estamos teniendo una consistencia de los datos, esto se debe a que al inicio los datos no están, por lo que vamos a considerar los años donde si tenemos todas las observaciones. 
+
+```{r}
+data_tasa_politica <- data_tasa_politica %>%
+  # Eliminamos los años donde casi no habían observaciones.
+  select(-`2006`, -`2007`, -`2008`)
+```
+
+
+
+
+```{r}
+data_tasa_politica <- data_tasa_politica %>%
+  rename(dia = ...1)
+
+data_TPM_larga <- data_tasa_politica %>%
+  pivot_longer(cols = -dia, names_to = "Año", values_to = "Tasa") %>%
+  mutate(Año = as.numeric(Año))  # Convertimos Año a numérico
+```
+
+
+Plotemos
+
+```{r}
+ggplot(data_TPM_larga, aes(x = Año, y = Tasa)) +
+  geom_line(color = "purple", size = 1) +  
+  labs(title = "Evolución de la Tasa de Política Monetaria 2009-2024",
+       x = "Año",
+       y = "Tasa (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
+  theme(plot.caption = element_text(hjust = 1)) +
+  labs(caption = "Fuente: elaboración propia")
+```
+
+
+Haremos un ajuste mensual, con el fin de observar mejor su comportamiento. 
+
+```{r}
+promedio_TPM_por_ano <- data_TPM_larga %>%
+  group_by(Año) %>%
+  summarise(promedio_tasa = mean(Tasa, na.rm = TRUE))  # na.rm = TRUE elimina los valores NA
+```
+
+
+
+
+```{r}
+ggplot(promedio_TPM_por_ano, aes(x = Año, y = promedio_tasa)) +
+  geom_line(color = 'purple') +  
+  geom_point(color = 'darkorchid4') +  
+  labs(title = "Promedio de Tasa de Política Monetaria por Año", x = "Año", y = "Promedio de la Tasa Política Monetaria") +
+  theme_minimal()
+```
+
+
 
 
 ## Producto Interno Bruto
@@ -162,7 +222,7 @@ ggplot(bd.pib, aes(x = annos, y = pib)) +
   theme_minimal()
 ```
 
-## Variación de salarios
+ ## Variación de salarios
 
 ```{r var_salarios}
 # Se cargan los datos del ISMN
