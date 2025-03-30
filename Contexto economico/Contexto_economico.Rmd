@@ -128,7 +128,6 @@ Note entonces que en este gráfico tenemos una tendencia decreciente en promedio
 Para hacer una comparación, vamos a ver ahora la Tasa de Polítca Monetaria. 
 
 ```{r}
-library(readxl)
 data_tasa_politica <- read_excel("C:/Users/Admin/Downloads/historico_tasa_politica_monetaria.xlsx")
 ```
 
