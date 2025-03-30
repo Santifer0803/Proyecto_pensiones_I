@@ -64,8 +64,7 @@ ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
 
 ```{r}
 # Cargamos la base de datos que contiene la información de la base con la tasa en meses
-library(readxl)
-data_tasa_basica <- read_excel("C:/Users/Admin/Downloads/historico_tasa_basica_pasiva_mensual.xlsx")
+data_tasa_basica <- read_excel("data/historico_tasa_basica_pasiva_mensual.xlsx")
 ```
 
 Para este caso vamos a eliminar la información del año 2025, debido a que no tenemos la completitud de estos datos, y solo nos centraremos en observar el comportamiento de este índice macroeconómico en el horizonte temporal del 2020 al 2024, para ello: 
@@ -79,8 +78,6 @@ data_tasa_basica <- data_tasa_basica %>%
 Cambiamos el nombre de ciertas variables:
 
 ```{r}
-library(dplyr)
-
 data_tasa_basica <- data_tasa_basica %>%
   rename(Mes = ...1)
 ```
@@ -88,8 +85,6 @@ data_tasa_basica <- data_tasa_basica %>%
 Procedemos a darle orden a los datos para manipularlos de una manera más eficiente.
 
 ```{r}
-library(tidyverse)  # Carga dplyr y ggplot2
-
 data_larga <- data_tasa_basica %>%
   pivot_longer(cols = -Mes, names_to = "Año", values_to = "Tasa") %>%
   mutate(Año = as.numeric(Año))  # Convertimos Año a numérico
@@ -111,8 +106,6 @@ ggplot(data_larga, aes(x = Año, y = Tasa)) +
 Note que esta imagen está muy quebrada, esto se debe a la naturaleza de las observaciones, por ello, vamos a proceder a calcular un promedio de la tasa mensual por año y procederemos a graficarla, esto lo que nos dará es la tendencia promedio que tuvo la tasa a lo largo de los años. 
 
 ```{r}
-library(dplyr)
-
 promedio_tasas_por_ano <- data_larga %>%
   group_by(Año) %>%
   summarise(promedio_tasa = mean(Tasa, na.rm = TRUE))  # na.rm = TRUE elimina los valores NA
@@ -121,8 +114,6 @@ promedio_tasas_por_ano <- data_larga %>%
 Ahora graficamos:
 
 ```{r}
-library(ggplot2)
-
 ggplot(promedio_tasas_por_ano, aes(x = Año, y = promedio_tasa)) +
   geom_line(color = 'lightblue') +  
   geom_point(color = 'royalblue') +  
