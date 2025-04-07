@@ -11,14 +11,15 @@ Se cargan las librerías necesarias.
 pacman::p_load(dplyr,
                ggplot2,
                readxl,
-               lubridate)
+               lubridate,
+               tidyr)
 ```
 
 ## Inflación
 
 ```{r inflacion_CR, warning=FALSE}
 # Se cargan los datos
-inflacion <- suppressMessages(read_excel("data/Inflacion_mundial.xls"))
+inflacion <- suppressMessages(read_excel("data/inflacion_mundial.xls"))
 
 # Se filtran para tener solo los de Costa Rica
 inflacion_cr <- inflacion %>%
@@ -63,19 +64,19 @@ ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
 ## Tasas de interés
 
 ```{r}
-# Cargamos la base de datos que contiene la información de la base con la tasa en meses
-data_tasa_basica <- read_excel("data/historico_tasa_basica_pasiva_mensual.xlsx")
+# Cargamos la base de datos que contiene la información de la tasa en meses
+data_tasa_basica <- read_excel("data/historico_TBP_mensual.xlsx")
 ```
 
-Para este caso vamos a eliminar la información del año 2025, debido a que no tenemos la completitud de estos datos, y solo nos centraremos en observar el comportamiento de este índice macroeconómico en el horizonte temporal del 2020 al 2024, para ello: 
+Para este caso vamos a eliminar la información del año 2025, debido a que no tenemos la completitud de estos datos, y solo nos centraremos en observar el comportamiento de este índice macroeconómico en el horizonte temporal del 2020 al 2024.
 
 ```{r}
 # Eliminamos la columna con los datos del 2025
 data_tasa_basica <- data_tasa_basica %>%
-  select(-'2025')  # Elimina la columna del año 2025
+  select(-'2025')
 ```
 
-Cambiamos el nombre de ciertas variables:
+Cambiamos el nombre de ciertas variables.
 
 ```{r}
 data_tasa_basica <- data_tasa_basica %>%
@@ -86,49 +87,46 @@ Procedemos a darle orden a los datos para manipularlos de una manera más eficie
 
 ```{r}
 data_larga <- data_tasa_basica %>%
-  pivot_longer(cols = -Mes, names_to = "Año", values_to = "Tasa") %>%
+  pivot_longer(cols = -Mes,
+               names_to = "Año",
+               values_to = "Tasa") %>%
   mutate(Año = as.numeric(Año))  # Convertimos Año a numérico
 ```
 
-
 ```{r}
 ggplot(data_larga, aes(x = Año, y = Tasa)) +
-  geom_line(color = "red", size = 1) +  
-  labs(title = "Evolución de la Tasa Básica Pasiva (2020-2024)",
-       x = "Año",
-       y = "Tasa (%)") +
+  geom_line(color = "red", size = 1) +
+  labs(x = "Año", y = "Tasa (%)") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
   theme(plot.caption = element_text(hjust = 1)) +
   labs(caption = "Fuente: elaboración propia")
-
 ```
+
 Note que esta imagen está muy quebrada, esto se debe a la naturaleza de las observaciones, por ello, vamos a proceder a calcular un promedio de la tasa mensual por año y procederemos a graficarla, esto lo que nos dará es la tendencia promedio que tuvo la tasa a lo largo de los años. 
 
 ```{r}
 promedio_tasas_por_ano <- data_larga %>%
   group_by(Año) %>%
-  summarise(promedio_tasa = mean(Tasa, na.rm = TRUE))  # na.rm = TRUE elimina los valores NA
+  summarise(promedio_tasa = mean(Tasa, na.rm = TRUE))
 ```
 
-Ahora graficamos:
+Ahora graficamos.
 
 ```{r}
 ggplot(promedio_tasas_por_ano, aes(x = Año, y = promedio_tasa)) +
-  geom_line(color = 'lightblue') +  
-  geom_point(color = 'royalblue') +  
-  labs(title = "Promedio de Tasa Básica Pasiva por Año", x = "Año", y = "Promedio de la Tasa Básica Pasiva") +
+  geom_line(color = 'lightblue') +
+  geom_point(color = 'royalblue') +
+  labs(x = "Año", y = "Promedio de la Tasa Básica Pasiva") +
   theme_minimal()
-
 ```
 
 Note entonces que en este gráfico tenemos una tendencia decreciente en promedio de los datos, estas transformaciones son con fines exploratorios, pues no queremos cambiar las propiedades estadísticas de los datos.
 
-
 Para hacer una comparación, vamos a ver ahora la Tasa de Polítca Monetaria. 
 
 ```{r}
-data_tasa_politica <- read_excel("C:/Users/Admin/Downloads/historico_tasa_politica_monetaria.xlsx")
+data_tasa_politica <- read_excel("data/historico_TPM_diaria.xlsx")
 ```
 
 Lo primero que vamos a realizar es un summary en la base.
@@ -136,8 +134,53 @@ Lo primero que vamos a realizar es un summary en la base.
 ```{r}
 summary(data_tasa_politica)
 ```
-De este pequeño resumen, podemos observar que los primeros años no estamos teniendo una consistencia de los datos, esto se debe
 
+De este pequeño resumen, podemos observar que los primeros años no estamos teniendo una consistencia de los datos, esto se debe a que al inicio los datos no están, por lo que vamos a considerar los años donde si tenemos todas las observaciones. 
+
+```{r}
+data_tasa_politica <- data_tasa_politica %>%
+  # Eliminamos los años donde casi no habían observaciones
+  select(-`2006`, -`2007`, -`2008`)
+```
+
+```{r}
+data_tasa_politica <- data_tasa_politica %>%
+  rename(dia = ...1)
+
+data_TPM_larga <- data_tasa_politica %>%
+  pivot_longer(cols = -dia,
+               names_to = "Año",
+               values_to = "Tasa") %>%
+  mutate(Año = as.numeric(Año))  # Convertimos Año a numérico
+```
+
+Graficamos.
+
+```{r}
+ggplot(data_TPM_larga, aes(x = Año, y = Tasa)) +
+  geom_line(color = "purple", size = 1) +
+  labs(x = "Año", y = "Tasa (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
+  theme(plot.caption = element_text(hjust = 1)) +
+  labs(caption = "Fuente: elaboración propia")
+```
+
+Haremos un ajuste mensual, con el fin de observar mejor su comportamiento. 
+
+```{r}
+promedio_TPM_por_ano <- data_TPM_larga %>%
+  group_by(Año) %>%
+  summarise(promedio_tasa = mean(Tasa, na.rm = TRUE))
+```
+
+```{r}
+ggplot(promedio_TPM_por_ano, aes(x = Año, y = promedio_tasa)) +
+  geom_line(color = 'purple') +
+  geom_point(color = 'darkorchid4') +
+  labs(x = "Año", y = "Promedio de la Tasa Política Monetaria") +
+  theme_minimal()
+```
 
 ## Producto Interno Bruto
 
@@ -162,7 +205,7 @@ ggplot(bd.pib, aes(x = annos, y = pib)) +
   theme_minimal()
 ```
 
-## Variación de salarios
+ ## Variación de salarios
 
 ```{r var_salarios}
 # Se cargan los datos del ISMN
