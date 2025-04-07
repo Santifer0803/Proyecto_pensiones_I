@@ -21,6 +21,7 @@ pacman::p_load(dplyr,
 Se inicia cargando los datos de la fecundidad, publicados por el INEC y juntados por cuenta propia.
 
 ```{r datos_tgf}
+# Se leen los datos y se corrigen los nombres de las columnas
 tgf <- read_excel("data/TGF_CR.xlsx")
 colnames(tgf) <- c("anno", "tgf")
 ```
@@ -35,5 +36,53 @@ ggplot(tgf, aes(x = anno, y = tgf)) +
   labs(x = "Año", y = "Tasa global de fecundidad", caption = "Fuente: elaboración propia") +
   scale_x_continuous(expand = c(0, 2)) +
   theme_minimal()
+```
+
+Adicionalmente, se van a comparar los datos de nacimientos del 2003 y del 2023 según el grupo de edad, pues resulta relevante observar si hay algún cambio en estos.
+
+```{r datos_nac}
+# Se leen los datos
+comparacion.nac <- read_excel("data/Nacimientos_por_edad_CR.xlsx")
+
+# Se cambian los nombres de las columnas
+
+colnames(comparacion.nac) <- c("grupo_edad", "anno_03", "anno_23")
+
+# Se transforman a datos numéricos las columnas
+comparacion.nac$anno_03 <- as.numeric(gsub(",", ".", comparacion.nac$anno_03))
+comparacion.nac$anno_23 <- as.numeric(gsub(",", ".", comparacion.nac$anno_23))
+
+# Se cambian los nombres de grupos largos
+comparacion.nac[1,1] <- "< 20"
+comparacion.nac[7,1] <- "> 45"
+```
+
+Se crea el gráfico para comparar los porcentajes de nacimientos según el grupo de edad.
+
+```{r grafico_nac}
+# Se ponen los datos en formato largo
+nac.largo <-
+  tidyr::pivot_longer(
+    comparacion.nac,
+    cols = c("anno_03", "anno_23"),
+    names_to = "anno",
+    values_to = "valor"
+  )
+
+nac.largo$grupo_edad <-
+  factor(nac.largo$grupo_edad, levels = unique(comparacion.nac$grupo_edad))
+
+# Se crea el gráfico
+ggplot(nac.largo, aes(x = grupo_edad, y = valor, fill = anno)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Grupo de Edad", y = "Porcentaje de nacimientos", fill = "Año") +
+  scale_fill_manual(
+    values = c("anno_03" = "#6BAED6", "anno_23" = "#08519C"),
+    labels = c("anno_03" = "2003", "anno_23" = "2023")
+  ) +
+  theme_minimal()
+
+# Se eliminan los datos innecesarios
+rm(nac.largo)
 ```
 
