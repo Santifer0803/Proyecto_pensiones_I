@@ -75,7 +75,7 @@ nac.largo$grupo_edad <-
 # Se crea el gráfico
 ggplot(nac.largo, aes(x = grupo_edad, y = valor, fill = anno)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Grupo de Edad", y = "Porcentaje de nacimientos", fill = "Año") +
+  labs(x = "Grupo de Edad", y = "Porcentaje de nacimientos", fill = "Año", caption = "Fuente: elaboración propia") +
   scale_fill_manual(
     values = c("anno_03" = "#6BAED6", "anno_23" = "#08519C"),
     labels = c("anno_03" = "2003", "anno_23" = "2023")
