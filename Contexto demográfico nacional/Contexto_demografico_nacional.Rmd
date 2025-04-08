@@ -69,13 +69,19 @@ nac.largo <-
     values_to = "valor"
   )
 
+# Se ponen los grupos como factores, para que salgan ordenados en el gráfico
 nac.largo$grupo_edad <-
   factor(nac.largo$grupo_edad, levels = unique(comparacion.nac$grupo_edad))
 
 # Se crea el gráfico
 ggplot(nac.largo, aes(x = grupo_edad, y = valor, fill = anno)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Grupo de Edad", y = "Porcentaje de nacimientos", fill = "Año", caption = "Fuente: elaboración propia") +
+  labs(
+    x = "Grupo de Edad",
+    y = "Porcentaje de nacimientos",
+    fill = "Año",
+    caption = "Fuente: elaboración propia"
+  ) +
   scale_fill_manual(
     values = c("anno_03" = "#6BAED6", "anno_23" = "#08519C"),
     labels = c("anno_03" = "2003", "anno_23" = "2023")
@@ -84,5 +90,33 @@ ggplot(nac.largo, aes(x = grupo_edad, y = valor, fill = anno)) +
 
 # Se eliminan los datos innecesarios
 rm(nac.largo)
+```
+
+## Matrimonios
+
+Se procede con los datos de matrimonios dentro del país, por simplicidad, se usaran los datos totales, no los relativos.
+
+```{r datos_matrimonio}
+# Se cargan los datos de matrimonios
+matrimonios <- read_excel("data/Matrimonios_CR.xlsx")
+
+# Se cambian los nombres de las columnas
+colnames(matrimonios) <- c("anno", "total")
+
+# Se ponen los datos como numéricos
+matrimonios$anno <- as.double(matrimonios$anno)
+matrimonios$total <- as.double(gsub(" ", "", matrimonios$total))
+```
+
+Seguidamente, se muestra el gráfico de los matrimonios por año, desde el 2003.
+
+```{r grafico_matrimonio}
+# Gráfico de matrimonios en Costa Rica desde 2003 hasta 2024
+ggplot(matrimonios, aes(x = anno, y = total)) +
+  geom_line(color = "#88419D", linewidth = 1) +
+  geom_point(color = "#810F7C", size = 1.5) +
+  labs(x = "Año", y = "Cantidad de matrimonios", caption = "Fuente: elaboración propia") +
+  scale_x_continuous(expand = c(0, 2)) +
+  theme_minimal()
 ```
 
