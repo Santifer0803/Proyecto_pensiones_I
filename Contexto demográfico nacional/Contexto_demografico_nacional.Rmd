@@ -19,7 +19,33 @@ pacman::p_load(dplyr,
 ## Variación de la población
 
 ```{r}
+# Se cargan los datos de la población en Costa Rica publicados por el INEC
+# Además, se eliminan las primeras 5 filas
+var.pob <- suppressMessages(read_excel("data/Poblacion_CR.xlsx", sheet = 3))[-(1:5), ]
 
+# Se eliminan las últimas 6 filas
+var.pob <- var.pob[1:(nrow(var.pob) - 6), ]
+
+# Se cambia el nombre de las columnas
+colnames(var.pob) <- c("anno", "total", "hombres", "mujeres")
+
+# El año 2022 está escrito como 2022a/, por lo que se arregla
+var.pob$anno[73] <- "2022"
+
+# Se convierten las columnas a tipo numérico
+var.pob <- var.pob %>% 
+  mutate(across(where(is.character), as.numeric))
+
+# Se dejan los datos para los años del 2000 al 2024
+var.pob <- var.pob %>% 
+  filter(anno >= 2000 & anno <= 2024)
+
+# Se grafica la población total de Costa Rica desde el 2000 hasta el 2024
+ggplot(var.pob, aes(x = anno, y = total / 1000000)) +
+  geom_line(color = "salmon", linewidth = 1) +
+  geom_point(color = "purple2", size = 1.5) +
+  labs(x = "Año", y = "Población en millones") +
+  theme_minimal()
 ```
 
 ## Migración
