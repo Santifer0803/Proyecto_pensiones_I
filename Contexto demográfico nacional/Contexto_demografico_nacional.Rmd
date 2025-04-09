@@ -1,6 +1,6 @@
 ---
-title: "Informe Contexto Demografico Nacional"
-author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erik Venegas"
+title: "Informe Contexto Demográfico Nacional"
+author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -14,6 +14,18 @@ pacman::p_load(dplyr,
                readxl,
                RColorBrewer,
                tidyr)
+```
+
+## Variación de la población
+
+```{r}
+
+```
+
+## Migración
+
+```{r}
+
 ```
 
 ## Fecundidad
@@ -45,7 +57,6 @@ Adicionalmente, se van a comparar los datos de nacimientos del 2003 y del 2023 s
 comparacion.nac <- read_excel("data/Nacimientos_por_edad_CR.xlsx")
 
 # Se cambian los nombres de las columnas
-
 colnames(comparacion.nac) <- c("grupo_edad", "anno_03", "anno_23")
 
 # Se transforman a datos numéricos las columnas
@@ -53,8 +64,8 @@ comparacion.nac$anno_03 <- as.numeric(gsub(",", ".", comparacion.nac$anno_03))
 comparacion.nac$anno_23 <- as.numeric(gsub(",", ".", comparacion.nac$anno_23))
 
 # Se cambian los nombres de grupos largos
-comparacion.nac[1,1] <- "< 20"
-comparacion.nac[7,1] <- "> 45"
+comparacion.nac[1, 1] <- "< 20"
+comparacion.nac[7, 1] <- "> 45"
 ```
 
 Se crea el gráfico para comparar los porcentajes de nacimientos según el grupo de edad.
@@ -94,7 +105,7 @@ rm(nac.largo)
 
 ## Matrimonios
 
-Se procede con los datos de matrimonios dentro del país, por simplicidad, se usaran los datos totales, no los relativos.
+Se procede con los datos de matrimonios dentro del país, por simplicidad, se usarán los datos totales, no los relativos.
 
 ```{r datos_matrimonio}
 # Se cargan los datos de matrimonios
@@ -118,5 +129,17 @@ ggplot(matrimonios, aes(x = anno, y = total)) +
   labs(x = "Año", y = "Cantidad de matrimonios", caption = "Fuente: elaboración propia") +
   scale_x_continuous(expand = c(0, 2)) +
   theme_minimal()
+```
+
+## Desempleo
+
+```{r}
+
+```
+
+## Población Económicamente Activa
+
+```{r}
+
 ```
 
