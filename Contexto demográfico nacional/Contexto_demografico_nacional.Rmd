@@ -75,6 +75,7 @@ tasa.crec <- tasa.crec %>%
 ggplot(tasa.crec, aes(x = anno, y = tasa)) +
   geom_line(color = "darkseagreen", linewidth = 1) +
   geom_point(color = "lightslateblue", size = 1.5) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "orchid", linewidth = 1.05) +
   labs(x = "Año", y = "Tasa de crecimiento") +
   theme_minimal()
 ```
