@@ -109,6 +109,10 @@ estrc.pob <- estrc.pob %>%
                names_to = "grupo_edad",
                values_to = "valor")
 
+# Se ordenan las categorías de la variable grupo de edad
+estrc.pob$grupo_edad <- factor(estrc.pob$grupo_edad,
+                               levels = c("0-14", "15-64", ">65"))
+
 # Se grafica la estructura de la población en Costa Rica en los años 2000 y 2024
 ggplot(estrc.pob,
        aes(
