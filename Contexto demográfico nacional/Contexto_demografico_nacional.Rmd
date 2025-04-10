@@ -18,33 +18,105 @@ pacman::p_load(dplyr,
 
 ## Variación de la población
 
-```{r}
+### Población total
+
+```{r pob_total}
 # Se cargan los datos de la población en Costa Rica publicados por el INEC
 # Además, se eliminan las primeras 5 filas
-var.pob <- suppressMessages(read_excel("data/Poblacion_CR.xlsx", sheet = 3))[-(1:5), ]
+pob.total <- suppressMessages(read_excel("data/Poblacion_CR.xlsx", sheet = 3))[-(1:5), ]
 
 # Se eliminan las últimas 6 filas
-var.pob <- var.pob[1:(nrow(var.pob) - 6), ]
+pob.total <- pob.total[1:(nrow(pob.total) - 6), ]
 
 # Se cambia el nombre de las columnas
-colnames(var.pob) <- c("anno", "total", "hombres", "mujeres")
+colnames(pob.total) <- c("anno", "total", "hombres", "mujeres")
 
 # El año 2022 está escrito como 2022a/, por lo que se arregla
-var.pob$anno[73] <- "2022"
+pob.total$anno[73] <- "2022"
 
 # Se convierten las columnas a tipo numérico
-var.pob <- var.pob %>% 
-  mutate(across(where(is.character), as.numeric))
+pob.total[] <- lapply(pob.total, as.numeric)
 
 # Se dejan los datos para los años del 2000 al 2024
-var.pob <- var.pob %>% 
+pob.total <- pob.total %>% 
   filter(anno >= 2000 & anno <= 2024)
 
 # Se grafica la población total de Costa Rica desde el 2000 hasta el 2024
-ggplot(var.pob, aes(x = anno, y = total / 1000000)) +
+ggplot(pob.total, aes(x = anno, y = total / 1000000)) +
   geom_line(color = "salmon", linewidth = 1) +
   geom_point(color = "purple2", size = 1.5) +
   labs(x = "Año", y = "Población en millones") +
+  theme_minimal()
+```
+
+### Tasa de crecimiento
+
+```{r tasa_crec}
+# Se cargan los datos de la tasa de crecimiento en Costa Rica publicados por el INEC
+tasa.crec <- suppressMessages(read_excel("data/Poblacion_CR.xlsx", sheet = 6))[26, ]
+
+# Se transpone el dataframe y se eliminan las primeras 2 filas
+tasa.crec <- t(tasa.crec)[-(1:2), ]
+
+# Se crea un nuevo dataframe con los datos anteriores incorporándoles los años correspondientes
+tasa.crec <- data.frame(tasa = tasa.crec, anno = 1951:2100)
+
+# Se corrige el nombre de las filas
+rownames(tasa.crec) <- 1:nrow(tasa.crec)
+
+# Se cambia el tipo de la variable tasa de character a numérico
+tasa.crec$tasa <- as.numeric(tasa.crec$tasa)
+
+# Se dejan los datos para los años del 2000 al 2024
+tasa.crec <- tasa.crec %>%
+  filter(anno >= 2000 & anno <= 2024)
+
+# Se grafica la tasa de crecimiento en Costa Rica desde el 2000 hasta el 2024
+ggplot(tasa.crec, aes(x = anno, y = tasa)) +
+  geom_line(color = "darkseagreen", linewidth = 1) +
+  geom_point(color = "lightslateblue", size = 1.5) +
+  labs(x = "Año", y = "Tasa de crecimiento") +
+  theme_minimal()
+```
+
+### Estructura poblacional
+
+```{r estrc_pob}
+# Se cargan los datos de la estructura poblacional en Costa Rica publicados por el INEC
+estrc.pob <- suppressMessages(read_excel("data/Poblacion_CR.xlsx", sheet = 6))[28:30, ]
+
+# Se transponen los datos y se convierten en dataframe
+estrc.pob <- as.data.frame(t(estrc.pob)[-1, ])
+
+# Se corrige el nombre de las columnas y de las filas
+colnames(estrc.pob) <- c("0-14", "15-64", ">65")
+rownames(estrc.pob) <- 1:nrow(estrc.pob)
+
+# Se convierten las columnas a tipo numérico
+estrc.pob[] <- lapply(estrc.pob, as.numeric)
+
+# Se agregan los años correspondientes
+estrc.pob$anno <- 1950:2100
+
+# Se dejan los datos para los años 2000 y 2024
+estrc.pob <- estrc.pob %>%
+  filter(anno %in% c(2000, 2024))
+
+# Se convierten los datos a formato largo
+estrc.pob <- estrc.pob %>%
+  pivot_longer(cols = -anno,
+               names_to = "grupo_edad",
+               values_to = "valor")
+
+# Se grafica la estructura de la población en Costa Rica en los años 2000 y 2024
+ggplot(estrc.pob,
+       aes(
+         x = grupo_edad,
+         y = valor / 1000000,
+         fill = as.factor(anno)
+       )) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Grupo de Edad", y = "Población en millones", fill = "Año") +
   theme_minimal()
 ```
 
