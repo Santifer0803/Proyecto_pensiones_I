@@ -130,6 +130,37 @@ ggplot(estrc.pob,
 ## Migración
 
 ```{r}
+# Se cargan los datos de la migración en Costa Rica publicados por el INEC
+
+migracion.total <- read_excel("data/Poblacion_CR.xlsx", sheet = 6)
+
+#se escogen los datos relevantes 
+
+migracion.total <- migracion.total[c(3,19,20), ]
+
+migracion.total <- as.data.frame(t(migracion.total))
+
+#Se ajustan los nombres de las columnas
+colnames(migracion.total) <- migracion.total[1, ]
+
+migracion.total <- migracion.total[-1, ]
+
+#se pasan a numeric los datos
+migracion.total[] <- lapply(migracion.total, as.numeric)
+
+#se arreglan los nombres de columnas y filas
+colnames(migracion.total) <- c("Año", "saldo_neto", "tasa_neta")
+rownames(migracion.total) <- NULL
+
+#se filtran los años 
+migracion.total <- migracion.total[migracion.total$Año >= 2000 & migracion.total$Año <= 2024, ]
+
+
+ggplot(migracion.total, aes(x = Año, y =  tasa_neta)) +
+  geom_line(color = "darkred", linewidth = 1) +
+  geom_point(color = "blue", size = 1.5) +
+  labs(x = "Año", y = "Tasa de migración neta (por cien mil habitantes)") +
+  theme_minimal()
 
 ```
 
