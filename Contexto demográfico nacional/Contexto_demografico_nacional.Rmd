@@ -13,7 +13,9 @@ pacman::p_load(dplyr,
                lubridate,
                readxl,
                RColorBrewer,
-               tidyr)
+               tidyr,
+               tidyverse
+)
 ```
 
 ## Variación de la población
@@ -237,7 +239,34 @@ ggplot(matrimonios, aes(x = anno, y = total)) +
 ## Desempleo
 
 ```{r}
+# Se carga la base de datos.
+data_desempleo <- read_excel("data/data_desempleo.xls")
 
+# Se extrae país de interés.
+observacion_costa_rica <- data_desempleo[49, ]
+
+# Se ordenan los datos en formato tabla.
+tasa_larga <- observacion_costa_rica %>%
+  pivot_longer(
+    cols = `1960`:`2023`,  
+    names_to = "anio",
+    values_to = "valor"
+  )
+
+# Se filtran los años de interés en el estudio
+tasa_filtrada <- tasa_larga %>%
+  mutate(anio = as.numeric(anio)) %>%
+  filter(anio >= 2000 & anio <= 2023)
+
+# Se realiza un plot, para visualización de datos
+ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
+  geom_line(color = "cornflowerblue") +
+  geom_point(color = "midnightblue") +
+  labs(title = "Tasa Desempleo en Costa Rica (2000-2023)",
+       x = "Año",
+       y = "Tasa de Desempleo",
+       caption = "Elaboración propia") +
+  theme_minimal()
 ```
 
 ## Población Económicamente Activa
