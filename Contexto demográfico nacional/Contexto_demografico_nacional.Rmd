@@ -256,7 +256,8 @@ tasa_larga <- observacion_costa_rica %>%
 # Se filtran los años de interés en el estudio
 tasa_filtrada <- tasa_larga %>%
   mutate(anio = as.numeric(anio)) %>%
-  filter(anio >= 2000 & anio <= 2023)
+  # Solo vamos a tomar desde el año 2010, para poder comparar
+  filter(anio >= 2010 & anio <= 2023)
 
 # Se realiza un plot, para visualización de datos
 ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
@@ -268,6 +269,22 @@ ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
        caption = "Elaboración propia") +
   theme_minimal()
 ```
+
+```{r}
+tasas_anualizadas <- read_excel("C:/Users/Admin/Downloads/tasas_anualizadas.xlsx")
+
+ggplot(tasas_anualizadas, aes(x = Año, y = `Tasa Anual Promediada`)) +
+  geom_line(color = "firebrick") +
+  geom_point(color = "red") +
+  labs(title = "Tasa Desempleo en Costa Rica (2000-2024)",
+       x = "Año",
+       y = "Tasa de Desempleo",
+       caption = "Elaboración propia") +
+  theme_minimal()
+```
+
+
+
 
 ## Población Económicamente Activa
 
