@@ -51,10 +51,8 @@ ggplot(inflacion_cr, aes(x = Año, y = `Costa Rica`)) +
   geom_line(color = "blue") +
   geom_point(color = "darkblue", size = 1.5) +
   labs(
-    title = "",
     x = "Año",
-    y = "Inflación",
-    caption = "Fuente: elaboración propia"
+    y = "Inflación"
   ) +
   theme_minimal() + scale_x_continuous(limits = c(2000, max(inflacion_cr$Año)), breaks = seq(2000, max(inflacion_cr$Año), by = 5)) +
   scale_y_continuous(limits = c(-0.1, 15), breaks = seq(0, 25, by = 5))
@@ -99,8 +97,7 @@ ggplot(data_larga, aes(x = Año, y = Tasa)) +
   labs(x = "Año", y = "Tasa (%)") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
-  theme(plot.caption = element_text(hjust = 1)) +
-  labs(caption = "Fuente: elaboración propia")
+  theme(plot.caption = element_text(hjust = 1))
 ```
 
 Note que esta imagen está muy quebrada, esto se debe a la naturaleza de las observaciones, por ello, vamos a proceder a calcular un promedio de la tasa mensual por año y procederemos a graficarla, esto lo que nos dará es la tendencia promedio que tuvo la tasa a lo largo de los años. 
@@ -162,8 +159,7 @@ ggplot(data_TPM_larga, aes(x = Año, y = Tasa)) +
   labs(x = "Año", y = "Tasa (%)") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 10, hjust = 1)) +
-  theme(plot.caption = element_text(hjust = 1)) +
-  labs(caption = "Fuente: elaboración propia")
+  theme(plot.caption = element_text(hjust = 1))
 ```
 
 Haremos un ajuste mensual, con el fin de observar mejor su comportamiento. 
@@ -201,7 +197,7 @@ bd.pib <- data.frame(annos = 2000:2024,
 ggplot(bd.pib, aes(x = annos, y = pib)) +
   geom_line(color = "chartreuse3", linewidth = 1) +
   geom_point(color = "chartreuse4", size = 1.5) +
-  labs(x = "Año", y = "PIB en billones de colones", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "PIB en billones de colones") +
   theme_minimal()
 ```
 
@@ -234,7 +230,7 @@ bd.ismn <- bd.ismn[-nrow(bd.ismn), ]
 ggplot(bd.ismn, aes(x = anno, y = var_mensual)) +
   geom_line(color = "salmon", linewidth = 1) +
   geom_point(color = "orchid3", size = 1.5) +
-  labs(x = "Año", y = "Promedio de la variación mensual", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "Promedio de la variación mensual") +
   theme_minimal()
 
 # Se procede a hacer lo mismo con el ISMR
@@ -258,7 +254,7 @@ bd.ismr <- bd.ismr[-nrow(bd.ismr), ]
 ggplot(bd.ismr, aes(x = anno, y = var_mensual)) +
   geom_line(color = "slateblue", linewidth = 1) +
   geom_point(color = "firebrick", size = 1.5) +
-  labs(x = "Año", y = "Promedio de la variación mensual", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "Promedio de la variación mensual") +
   theme_minimal()
 ```
 
