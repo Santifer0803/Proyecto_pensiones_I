@@ -181,7 +181,7 @@ Se crea un gráfico de líneas, para analizar la evolución de este.
 ggplot(tgf, aes(x = anno, y = tgf)) +
   geom_line(color = "#41AE76", linewidth = 1) +
   geom_point(color = "#238B45", size = 1.5) +
-  labs(x = "Año", y = "Tasa global de fecundidad", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "Tasa global de fecundidad") +
   scale_x_continuous(expand = c(0, 2)) +
   theme_minimal()
 ```
@@ -226,8 +226,7 @@ ggplot(nac.largo, aes(x = grupo_edad, y = valor, fill = anno)) +
   labs(
     x = "Grupo de Edad",
     y = "Porcentaje de nacimientos",
-    fill = "Año",
-    caption = "Fuente: elaboración propia"
+    fill = "Año"
   ) +
   scale_fill_manual(
     values = c("anno_03" = "#6BAED6", "anno_23" = "#08519C"),
@@ -262,7 +261,7 @@ Seguidamente, se muestra el gráfico de los matrimonios por año, desde el 2003.
 ggplot(matrimonios, aes(x = anno, y = total)) +
   geom_line(color = "#88419D", linewidth = 1) +
   geom_point(color = "#810F7C", size = 1.5) +
-  labs(x = "Año", y = "Cantidad de matrimonios", caption = "Fuente: elaboración propia") +
+  labs(x = "Año", y = "Cantidad de matrimonios") +
   scale_x_continuous(expand = c(0, 2)) +
   theme_minimal()
 ```
@@ -296,22 +295,20 @@ ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
   geom_point(color = "midnightblue") +
   labs(title = "Tasa Desempleo en Costa Rica (2000-2023)",
        x = "Año",
-       y = "Tasa de Desempleo",
-       caption = "Elaboración propia") +
+       y = "Tasa de Desempleo") +
   theme_minimal()
 ```
 
 ```{r}
-tasas_anualizadas <- read_excel("C:/Users/Admin/Downloads/tasas_anualizadas.xlsx")
-
-ggplot(tasas_anualizadas, aes(x = Año, y = `Tasa Anual Promediada`)) +
-  geom_line(color = "firebrick") +
-  geom_point(color = "red") +
-  labs(title = "Tasa Desempleo en Costa Rica (2000-2024)",
-       x = "Año",
-       y = "Tasa de Desempleo",
-       caption = "Elaboración propia") +
-  theme_minimal()
+# tasas_anualizadas <- read_excel("C:/Users/Admin/Downloads/tasas_anualizadas.xlsx")
+# 
+# ggplot(tasas_anualizadas, aes(x = Año, y = `Tasa Anual Promediada`)) +
+#   geom_line(color = "firebrick") +
+#   geom_point(color = "red") +
+#   labs(title = "Tasa Desempleo en Costa Rica (2000-2024)",
+#        x = "Año",
+#        y = "Tasa de Desempleo") +
+#   theme_minimal()
 ```
 
 
