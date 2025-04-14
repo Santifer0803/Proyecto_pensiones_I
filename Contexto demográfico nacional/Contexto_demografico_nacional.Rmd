@@ -265,14 +265,14 @@ ggplot(matrimonios, aes(x = anno, y = total)) +
 
 ## Desempleo
 
-```{r desempleo}
-# Se carga la base de datos.
+```{r desempleo_Banco}
+# Se carga la base de datos
 data_desempleo <- read_excel("data/data_desempleo.xls")
 
-# Se extrae país de interés.
+# Se extrae el país de interés
 observacion_costa_rica <- data_desempleo[49, ]
 
-# Se ordenan los datos en formato tabla.
+# Se ordenan los datos en formato tabla
 tasa_larga <- observacion_costa_rica %>%
   pivot_longer(
     cols = `1960`:`2023`,  
@@ -286,40 +286,35 @@ tasa_filtrada <- tasa_larga %>%
   # Solo vamos a tomar desde el año 2010, para poder comparar
   filter(anio >= 2010 & anio <= 2023)
 
-# Se realiza un plot, para visualización de datos
+# Se realiza un gráfico para la visualización de los datos
 ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
   geom_line(color = "cornflowerblue") +
   geom_point(color = "midnightblue") +
   labs(x = "Año",
-       y = "Tasa de Desempleo") +
+       y = "Tasa de desempleo") +
   theme_minimal()
 ```
 
-```{r}
-tasas_anualizadas <- read_excel("C:/Users/Admin/Downloads/tasas_anualizadas.xlsx")
+```{r desempleo_INEC}
+tasas_anualizadas <- read_excel("data/tasas_anualizadas.xlsx")
 
 ggplot(tasas_anualizadas, aes(x = Año, y = `Tasa Anual Promediada`)) +
   geom_line(color = "firebrick") +
   geom_point(color = "red") +
   labs(x = "Año",
-       y = "Tasa de Desempleo") +
+       y = "Tasa de desempleo") +
   theme_minimal()
 ```
-
-
 
 ## Población Económicamente Activa
 
 ```{r PEA}
 data_PEA <- read_excel("data/data_PEA.xlsx")
 
-ggplot(data_PEA, aes(x = Año, y = PEA)) +
+ggplot(data_PEA, aes(x = Año, y = PEA / 1000000)) +
   geom_line(color = "lightgreen") +
   geom_point(color = "darkgreen") +
   labs(x = "Año",
        y = "Población Económicamente Activa") +
   theme_minimal()
-
 ```
-
-
