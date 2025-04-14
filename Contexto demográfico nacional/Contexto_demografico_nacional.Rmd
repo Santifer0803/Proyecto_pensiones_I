@@ -129,39 +129,36 @@ ggplot(estrc.pob,
 
 ## Migración
 
-```{r}
+```{r migracion}
 # Se cargan los datos de la migración en Costa Rica publicados por el INEC
-
 migracion.total <- read_excel("data/Poblacion_CR.xlsx", sheet = 6)
 
-#se escogen los datos relevantes 
-
-migracion.total <- migracion.total[c(3,19,20), ]
-
+# Se escogen los datos relevantes
+migracion.total <- migracion.total[c(3, 19, 20), ]
 migracion.total <- as.data.frame(t(migracion.total))
 
-#Se ajustan los nombres de las columnas
+# Se ajustan los nombres de las columnas
 colnames(migracion.total) <- migracion.total[1, ]
 
 migracion.total <- migracion.total[-1, ]
 
-#se pasan a numeric los datos
+# Se pasan a tipo numérico los datos
 migracion.total[] <- lapply(migracion.total, as.numeric)
 
-#se arreglan los nombres de columnas y filas
+# Se arreglan los nombres de columnas y filas
 colnames(migracion.total) <- c("Año", "saldo_neto", "tasa_neta")
 rownames(migracion.total) <- NULL
 
-#se filtran los años 
-migracion.total <- migracion.total[migracion.total$Año >= 2000 & migracion.total$Año <= 2024, ]
+# Se filtran los años
+migracion.total <- migracion.total[migracion.total$Año >= 2000 &
+                                     migracion.total$Año <= 2024, ]
 
-
+# Se crea el gráfico
 ggplot(migracion.total, aes(x = Año, y =  tasa_neta)) +
   geom_line(color = "darkred", linewidth = 1) +
   geom_point(color = "blue", size = 1.5) +
   labs(x = "Año", y = "Tasa de migración neta (por cien mil habitantes)") +
   theme_minimal()
-
 ```
 
 ## Fecundidad
@@ -268,14 +265,14 @@ ggplot(matrimonios, aes(x = anno, y = total)) +
 
 ## Desempleo
 
-```{r}
-# Se carga la base de datos.
+```{r desempleo}
+# Se carga la base de datos
 data_desempleo <- read_excel("data/data_desempleo.xls")
 
-# Se extrae país de interés.
+# Se extrae el país de interés
 observacion_costa_rica <- data_desempleo[49, ]
 
-# Se ordenan los datos en formato tabla.
+# Se ordenan los datos en formato tabla
 tasa_larga <- observacion_costa_rica %>%
   pivot_longer(
     cols = `1960`:`2023`,  
@@ -289,34 +286,19 @@ tasa_filtrada <- tasa_larga %>%
   # Solo vamos a tomar desde el año 2010, para poder comparar
   filter(anio >= 2010 & anio <= 2023)
 
-# Se realiza un plot, para visualización de datos
+# Se realiza un gráfico para la visualización de los datos
 ggplot(tasa_filtrada, aes(x = anio, y = valor)) +
   geom_line(color = "cornflowerblue") +
   geom_point(color = "midnightblue") +
-  labs(title = "Tasa Desempleo en Costa Rica (2000-2023)",
-       x = "Año",
-       y = "Tasa de Desempleo") +
+  labs(x = "Año",
+       y = "Tasa de desempleo") +
   theme_minimal()
 ```
 
-```{r}
-# tasas_anualizadas <- read_excel("C:/Users/Admin/Downloads/tasas_anualizadas.xlsx")
-# 
-# ggplot(tasas_anualizadas, aes(x = Año, y = `Tasa Anual Promediada`)) +
-#   geom_line(color = "firebrick") +
-#   geom_point(color = "red") +
-#   labs(title = "Tasa Desempleo en Costa Rica (2000-2024)",
-#        x = "Año",
-#        y = "Tasa de Desempleo") +
-#   theme_minimal()
-```
-
-
-
-
 ## Población Económicamente Activa
 
-```{r}
+```{r PEA}
 
 ```
+
 
