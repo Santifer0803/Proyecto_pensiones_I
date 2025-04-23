@@ -1,0 +1,44 @@
+---
+title: "Informe Contexto Demográfico del Régimen"
+author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Se cargan las librerías necesarias.
+
+```{r librerias}
+pacman::p_load(dplyr,
+               ggplot2,
+               readxl,
+               lubridate,
+               tidyr)
+```
+
+## Estructura de la población
+
+```{r estrc_pob}
+
+```
+
+## Población activa
+
+```{r pob_actv}
+
+```
+
+
+## Población pensionada
+
+```{r pob_pensd}
+
+```
+
+## Comportamiento de altas y bajas
+
+```{r altas_bajas}
+
+```
+
+
+
