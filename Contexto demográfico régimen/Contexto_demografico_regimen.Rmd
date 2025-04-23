@@ -15,6 +15,13 @@ pacman::p_load(dplyr,
                tidyr)
 ```
 
+Se leen las bases de cotizantes y pensionados.
+
+```{r datos_bases}
+cotizantes <- read_excel("data/BD_Cotizantes.xlsx")
+pensionados <- read_excel("data/BD_Pensionados.xlsx")
+```
+
 ## Estructura de la población
 
 ```{r estrc_pob}
