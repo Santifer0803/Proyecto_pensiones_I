@@ -38,8 +38,22 @@ pensionados <- read_excel("data/BD_Pensionados.xlsx")
 ## Población pensionada
 
 ```{r pob_pensd}
-
+# Frecuencia de la variable sexo separado por tipo de pensión.
+ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("M" = "cornflowerblue", 
+                               "F" = "lightpink"),
+                    labels = c("M" = "Hombres", "F" = "Mujeres")) +
+  scale_x_discrete(labels = c("VEJEZ" = "Vejez", 
+                              "INVALIDEZ" = "Invalidez", 
+                              "SUCESION" = "Sucesión")) +
+  labs(x = "Tipo de Pensión", 
+       y = "Frecuencia", 
+       fill = "Sexo") +
+  theme_minimal()
 ```
+
+
 
 ## Comportamiento de altas y bajas
 
