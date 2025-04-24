@@ -1,0 +1,79 @@
+---
+title: "Informe Contexto Demográfico del Régimen"
+author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Se cargan las librerías necesarias.
+
+```{r librerias}
+pacman::p_load(dplyr,
+               ggplot2,
+               readxl,
+               lubridate,
+               tidyr)
+```
+
+Se leen las bases de cotizantes y pensionados.
+
+```{r datos_bases}
+cotizantes <- read_excel("data/BD_Cotizantes.xlsx")
+pensionados <- read_excel("data/BD_Pensionados.xlsx")
+```
+
+## Estructura de la población
+
+```{r estrc_pob}
+
+```
+
+## Población activa
+
+```{r pob_actv}
+
+```
+
+
+## Población pensionada
+
+```{r pob_pensd}
+# Frecuencia de la variable sexo separado por tipo de pensión.
+ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = c("M" = "cornflowerblue", 
+                               "F" = "lightpink"),
+                    labels = c("M" = "Hombres", "F" = "Mujeres")) +
+  scale_x_discrete(labels = c("VEJEZ" = "Vejez", 
+                              "INVALIDEZ" = "Invalidez", 
+                              "SUCESION" = "Sucesión")) +
+  labs(x = "Tipo de Pensión", 
+       y = "Frecuencia", 
+       fill = "Sexo") +
+  theme_minimal()
+```
+```{r}
+# Se crea la nueva columna con las duraciones en meses de las pensiones.
+pensionados <- pensionados %>%
+  mutate(duracion = interval(ymd(`Rige de la Pensión`), ymd("2024-12-31")) %/% months(1))
+```
+
+
+```{r}
+# Se plotea la nueva variable.
+ggplot(pensionados, aes(x = duracion)) +
+  geom_histogram(binwidth = 8, fill = "steelblue", color = "white") +
+  labs(x = "Meses de duración",
+       y = "Frecuencia") +
+  theme_minimal()
+```
+
+
+## Comportamiento de altas y bajas
+
+```{r altas_bajas}
+
+```
+
+
+

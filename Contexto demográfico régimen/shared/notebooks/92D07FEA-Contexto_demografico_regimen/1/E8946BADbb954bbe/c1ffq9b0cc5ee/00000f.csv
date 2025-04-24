@@ -1,0 +1,3 @@
+"0","# Se crea la nueva columna con las duraciones en meses de las pensiones."
+"0","pensionados <- pensionados %>%"
+"0","  mutate(duracion = interval(ymd(`Rige de la Pensión`), ymd(""2024-12-31"")) %/% months(1))"
