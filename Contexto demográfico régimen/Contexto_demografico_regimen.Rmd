@@ -96,7 +96,7 @@ for (i in 1:nrow(num.pensionados)) {
 
 # Gráfico con los pensionados
 ggplot(num.pensionados, aes(x = meses, y = pensionados)) +
-  geom_line(color = "blueviolet", linewidth = 1) +
+  geom_line(color = "blueviolet", linewidth = 0.75) +
   labs(x = "Tiempo", y = "Personas pensionadas") +
   theme_minimal()
 ```
@@ -110,7 +110,8 @@ lista.trab <- list()
 # Se llena la lista con un ciclo
 for (i in 1:(364 - 328 - 12)) {
   # Se suman los últimos 12 meses, desde el 1 de enero del 2023, para ver los trabajadores activos por mes
-  lista.trab[[i]] <- rowSums(cotizantes[, (328 + i):(339 + i)] > 10000)
+  lista.trab[[i]] <-
+    rowSums(cotizantes[, (328 + i):(339 + i)] > 10000)
 }
 
 # Se convierte la lista a una matriz
@@ -121,23 +122,26 @@ lista.trab <- colSums(lista.trab > 0)
 
 # Se crea un DataFrame con los trabajadores activos e inactivos por año
 trabajadores <-
-  data.frame(meses = ceiling_date(seq(
-    from = ymd("2023-01-01"),
-    to = ymd("2024-12-01"),
-    by = "1 month"
-  ), "month") - days(1),
-  activos = lista.trab,
-  inactivos = 5196 - lista.trab)
+  data.frame(
+    meses = ceiling_date(seq(
+      from = ymd("2023-01-01"),
+      to = ymd("2024-12-01"),
+      by = "1 month"
+    ), "month") - days(1),
+    activos = lista.trab,
+    inactivos = 5196 - lista.trab
+  )
 
 # Se elimina la variable innecesaria
 rm(lista.trab)
 
 # Gráfico de trabajadores activos e inactivos
 ggplot(trabajadores, aes(x = meses)) +
-  geom_line(aes(y = activos, color = "Activo")) +
-  geom_line(aes(y = inactivos, color = "Inactivo")) +
+  geom_line(aes(y = activos, color = "Activo"), linewidth = 0.75) +
+  geom_line(aes(y = inactivos, color = "Inactivo"), linewidth = 0.75) +
   labs(x = "Tiempo", y = "Cantidad de trabajadores") +
-  scale_colour_manual(name = "Estado", values = c("Activo" = "steelblue1", "Inactivo" = "tan2")) +
+  scale_colour_manual(name = "Estado",
+                      values = c("Activo" = "steelblue1", "Inactivo" = "tan2")) +
   theme_minimal()
 ```
 
