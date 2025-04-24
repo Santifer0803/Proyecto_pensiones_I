@@ -1,6 +1,0 @@
-"0","# Se plotea la nueva variable."
-"0","ggplot(pensionados, aes(x = duracion)) +"
-"0","  geom_histogram(binwidth = 8, fill = ""steelblue"", color = ""white"") +"
-"0","  labs(x = ""Meses de duración"","
-"0","       y = ""Frecuencia"") +"
-"0","  theme_minimal()"

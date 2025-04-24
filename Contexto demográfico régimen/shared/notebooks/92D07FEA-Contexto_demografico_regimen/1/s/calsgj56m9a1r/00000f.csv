@@ -1,2 +1,0 @@
-"0","cotizantes <- read_excel(""data/BD_Cotizantes.xlsx"")"
-"0","pensionados <- read_excel(""data/BD_Pensionados.xlsx"")"
