@@ -20,6 +20,9 @@ Se leen las bases de cotizantes y pensionados.
 ```{r datos_bases}
 cotizantes <- read_excel("data/BD_Cotizantes.xlsx")
 pensionados <- read_excel("data/BD_Pensionados.xlsx")
+
+# Se corrigen los nombres de las columnas de la base de cotizantes
+colnames(cotizantes)[4:363] <- format(seq(from = ymd("1995-01-01"), to = ymd("2024-12-01"), by = "1 month"), "%m-%Y")
 ```
 
 ## Estructura de la población
@@ -57,7 +60,7 @@ ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
 
 Seguidamente, se muestra un gráfico con la antigüedad de los pensionados.
 
-```{r}
+```{r antiguedad}
 # Se crea la nueva columna con las duraciones en meses de las pensiones.
 pensionados <- pensionados %>%
   mutate(duracion = interval(ymd(`Rige de la Pensión`), ymd("2024-12-31")) %/% months(1))
