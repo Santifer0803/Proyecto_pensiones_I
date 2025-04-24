@@ -227,6 +227,7 @@ ggplot(trabajadores, aes(x = meses)) +
   labs(x = "Tiempo", y = "Cantidad de trabajadores") +
   scale_colour_manual(name = "Estado",
                       values = c("Activo" = "steelblue1", "Inactivo" = "tan2")) +
+  scale_x_date(date_labels = "%m-%Y") +
   theme_minimal()
 ```
 
