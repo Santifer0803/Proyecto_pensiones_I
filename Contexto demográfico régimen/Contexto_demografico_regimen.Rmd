@@ -37,6 +37,8 @@ pensionados <- read_excel("data/BD_Pensionados.xlsx")
 
 ## Población pensionada
 
+En esta sección se presenta un análisis descriptivo de las personas ya pensionadas en la fecha de corte.
+
 ```{r pob_pensd}
 # Frecuencia de la variable sexo separado por tipo de pensión.
 ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
@@ -52,14 +54,14 @@ ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
        fill = "Sexo") +
   theme_minimal()
 ```
+
+Seguidamente, se muestra un gráfico con la antigüedad de los pensionados.
+
 ```{r}
 # Se crea la nueva columna con las duraciones en meses de las pensiones.
 pensionados <- pensionados %>%
   mutate(duracion = interval(ymd(`Rige de la Pensión`), ymd("2024-12-31")) %/% months(1))
-```
 
-
-```{r}
 # Se plotea la nueva variable.
 ggplot(pensionados, aes(x = duracion)) +
   geom_histogram(binwidth = 8, fill = "steelblue", color = "white") +
@@ -71,8 +73,29 @@ ggplot(pensionados, aes(x = duracion)) +
 
 ## Comportamiento de altas y bajas
 
-```{r altas_bajas}
+Se inicia contabilizando la cantidad de pensionados, esto se separa de los cotizados debido a que solo hay 365 pensionados, mientras que hay más de 5000 cotizantes. Lo cual generaría una diferencia de escala considerable en los gráficos finales.
 
+```{r pensionados}
+# DataFrame con Los pensionados por cada mes
+num.pensionados <-
+  data.frame(meses = ceiling_date(seq(
+    from = ymd("1995-01-01"),
+    to = ymd("2024-12-01"),
+    by = "1 month"
+  ), "month") - days(1),
+  pensionados = 0)
+
+# Se rellenan los pensionados por mes
+for (i in 1:nrow(num.pensionados)) {
+  num.pensionados[i, 2] <-
+    sum(pensionados$`Rige de la Pensión` <= num.pensionados[i, 1])
+}
+
+# Gráfico con los pensionados
+ggplot(num.pensionados, aes(x = meses, y = pensionados)) +
+  geom_line(color = "blueviolet", linewidth = 1) +
+  labs(x = "Meses", y = "Personas pensionadas") +
+  theme_minimal()
 ```
 
 
