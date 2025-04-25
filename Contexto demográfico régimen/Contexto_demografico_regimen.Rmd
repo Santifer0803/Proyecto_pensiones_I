@@ -142,8 +142,30 @@ ggplot(pensionados, aes(x = COD_TIPO_PENSION, fill = SEXO)) +
   labs(x = "Tipo de Pensión", y = "Frecuencia", fill = "Sexo") +
   theme_minimal()
 ```
+Por otro lado, se presenta el gráfico relacionado a la edad de la población pensionada.
 
-Seguidamente, se muestra un gráfico con la antigüedad de los pensionados.
+```{r}
+pensionados <- pensionados %>%
+  mutate(edad = floor(interval(start = FEC_NAC, end = ymd("2024-12-31")) / years(1)))
+
+ggplot(pensionados %>% filter(!is.na(edad)), aes(x = edad, fill = COD_TIPO_PENSION)) +
+  geom_histogram(binwidth = 2, position = "identity", alpha = 0.6) +
+  scale_fill_manual(values = c("Vejez" = "steelblue", 
+                               "Invalidez" = "darkorange", 
+                               "Sucesión" = "mediumorchid"),
+                    labels = c("VEJEZ" = "Vejez", 
+                               "INVALIDEZ" = "Invalidez", 
+                               "SUCESION" = "Sucesión")) +
+  labs(x = "Edad",
+       y = "Frecuencia",
+       fill = "Tipo de Pensión") +
+  theme_minimal()
+```
+
+
+
+
+Por último, se muestra un gráfico con la antigüedad de los pensionados.
 
 ```{r antiguedad}
 # Se crea la nueva columna con las duraciones en meses de las pensiones
