@@ -118,7 +118,21 @@ ggplot(pob.total, aes(x = Grupo_edad, y = Porcentaje, fill = Sexo)) +
 ## Población activa
 
 ```{r pob_actv}
+library(ggplot2)
 
+# personas por sexo
+sexo_cotizantes <- as.data.frame(table(cotizantes$Sexo))
+
+colnames(sexo_cotizantes) <- c("Sexo", "Cantidad")
+
+ggplot(sexo_cotizantes, aes(x = Sexo, y = Cantidad, fill = Sexo)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(
+    values = c("1" = "blue", "2" = "red"),
+    labels = c("1" = "Hombre", "2" = "Mujer")
+  ) +
+  labs(x = "Sexo", y = "Cantidad de Personas", fill = "Sexo") +
+  theme_minimal()
 ```
 
 
