@@ -118,31 +118,19 @@ ggplot(pob.total, aes(x = Grupo_edad, y = Porcentaje, fill = Sexo)) +
 
 ## Población activa
 
-```{r pob_actv}
-library(ggplot2)
-
-# personas por sexo
-sexo_cotizantes <- as.data.frame(table(cotizantes$Sexo))
-
-colnames(sexo_cotizantes) <- c("Sexo", "Cantidad")
-
-ggplot(sexo_cotizantes, aes(x = Sexo, y = Cantidad, fill = Sexo)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  scale_fill_manual(
-    values = c("1" = "blue", "2" = "red"),
-    labels = c("1" = "Hombre", "2" = "Mujer")
-  ) +
-  labs(x = "Sexo", y = "Cantidad de Personas", fill = "Sexo") +
-  theme_minimal()
-```
 
 ```{r}
+
+#se pone la columna en formato fecha
 cotizantes$Fec.Nac <- as.Date(cotizantes$Fec.Nac, format = "%Y-%m-%d")
 
+#la idea es extender sobre las filas la cotización de cada persona mediante un
+#pivot longer para usarlo en resultados posteriores, es decir cada fila es 
+# mes especifico para cada persona y si cotizó en esa fecha
 
 cotizantes_pivotados <- cotizantes %>%
   pivot_longer(
-    cols = matches("^\\d{2}-\\d{4}$"),
+    cols = matches("^\\d{2}-\\d{4}$"), #para q se guíe en las colunmas
     names_to = "mes_anno",
     values_to = "cotizacion"
   ) %>%
@@ -164,7 +152,7 @@ trab_activos <- cotizantes_pivotados %>%
   filter(fecha >= fecha_inicio, fecha < fecha_corte, cotizacion >= 10000) %>%
   distinct(ID)
 
-# clasificar en A (activos) o B
+# clasificar en A ( trabajadores activos) o B
 cotizantes_pivotados <- cotizantes_pivotados %>%
   mutate(
     grupo = if_else(ID %in% trab_activos$ID, "A", "B")
@@ -183,6 +171,86 @@ antiguedad <- cotizantes_pivotados %>%
 # unir a la base
 cotizantes_pivotados <- cotizantes_pivotados %>%
   left_join(antiguedad, by = "ID")
+
+```
+
+Resultados del análisis, tanto el dato crudo como el gráfico para edad sexo y antigüedad. 
+```{r}
+cotizantes_pivotados %>%
+  filter(!is.na(cotizacion) & cotizacion > 0) %>%
+  group_by(grupo) %>%
+  summarise(edad_promedio = mean(edad, na.rm = TRUE))
+
+```
+
+```{r}
+cotizantes_pivotados %>%
+  filter(!is.na(cotizacion) & cotizacion > 0) %>%
+  ggplot(aes(x = grupo, y = edad, fill = grupo)) +
+  geom_boxplot() +
+  labs(
+    x = "Grupo",
+    y = "Edad"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Pastel1")
+
+```
+
+
+```{r}
+cotizantes_pivotados %>%
+  filter(!is.na(cotizacion) & cotizacion > 0) %>%
+  group_by(grupo, Sexo) %>%
+  summarise(n = n_distinct(ID)) %>%
+  group_by(grupo) %>%
+  mutate(proporcion = n / sum(n))
+```
+
+```{r}
+sexo_prop <- cotizantes_pivotados %>%
+  filter(!is.na(cotizacion) & cotizacion > 0) %>%
+  group_by(grupo, Sexo) %>%
+  summarise(n = n_distinct(ID)) %>%
+  group_by(grupo) %>%
+  mutate(proporcion = n / sum(n))
+
+# Gráfico
+ggplot(sexo_prop, aes(x = grupo, y = proporcion, fill = Sexo)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = "Grupo",
+    y = "Proporción",
+    fill = "Sexo"
+  ) +
+  theme_minimal()
+```
+
+
+```{r}
+cotizantes_pivotados %>%
+  group_by(grupo, ID) %>%
+  summarise(antiguedad = first(antiguedad_meses)) %>%
+  group_by(grupo) %>%
+  summarise(antiguedad_promedio = mean(antiguedad, na.rm = TRUE))
+
+```
+
+```{r}
+# se toma un solo valor de antigüedad por persona
+antiguedad_por_persona <- cotizantes_pivotados %>%
+  select(ID, grupo, antiguedad_meses) %>%
+  distinct()
+
+ggplot(antiguedad_por_persona, aes(x = grupo, y = antiguedad_meses, fill = grupo)) +
+  geom_boxplot() +
+  labs(
+    x = "Grupo",
+    y = "Antigüedad en meses"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set2")
 
 ```
 
