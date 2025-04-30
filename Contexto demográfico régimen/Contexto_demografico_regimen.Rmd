@@ -14,7 +14,8 @@ pacman::p_load(dplyr,
                ggplot2,
                readxl,
                lubridate,
-               tidyr)
+               tidyr,
+               tidyverse)
 ```
 
 Se leen las bases de cotizantes y pensionados.
@@ -135,6 +136,55 @@ ggplot(sexo_cotizantes, aes(x = Sexo, y = Cantidad, fill = Sexo)) +
   theme_minimal()
 ```
 
+```{r}
+cotizantes$Fec.Nac <- as.Date(cotizantes$Fec.Nac, format = "%Y-%m-%d")
+
+
+cotizantes_pivotados <- cotizantes %>%
+  pivot_longer(
+    cols = matches("^\\d{2}-\\d{4}$"),
+    names_to = "mes_anno",
+    values_to = "cotizacion"
+  ) %>%
+  mutate(
+    fecha = as.Date(paste0("01-", mes_anno), format = "%d-%m-%Y"),
+    edad = as.integer(interval(Fec.Nac, fecha) / years(1))
+  )
+
+
+
+```
+
+```{r}
+fecha_corte <- ymd("2024-12-31")
+fecha_inicio <- fecha_corte %m-% months(12)
+
+# filtrar por contribuciones en el último año
+trab_activos <- cotizantes_pivotados %>%
+  filter(fecha >= fecha_inicio, fecha < fecha_corte, cotizacion >= 10000) %>%
+  distinct(ID)
+
+# clasificar en A (activos) o B
+cotizantes_pivotados <- cotizantes_pivotados %>%
+  mutate(
+    grupo = if_else(ID %in% trab_activos$ID, "A", "B")
+  )
+
+
+antiguedad <- cotizantes_pivotados %>%
+  filter(!is.na(cotizacion) & cotizacion > 0) %>%
+  group_by(ID) %>%
+  summarise(
+    antiguedad_meses = n_distinct(fecha),
+    primera_cotizacion = min(fecha),
+    ultima_cotizacion = max(fecha)
+  )
+
+# unir a la base
+cotizantes_pivotados <- cotizantes_pivotados %>%
+  left_join(antiguedad, by = "ID")
+
+```
 
 ## Población pensionada
 
