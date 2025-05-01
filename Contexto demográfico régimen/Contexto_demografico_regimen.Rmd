@@ -15,7 +15,8 @@ pacman::p_load(dplyr,
                readxl,
                lubridate,
                tidyr,
-               tidyverse)
+               tidyverse,
+               forcats)
 ```
 
 Se leen las bases de cotizantes y pensionados.
@@ -185,15 +186,27 @@ cotizantes_pivotados %>%
 
 ```{r}
 cotizantes_pivotados %>%
-  filter(!is.na(cotizacion) & cotizacion > 0) %>%
-  ggplot(aes(x = grupo, y = edad, fill = grupo)) +
-  geom_boxplot() +
+  filter(
+    !is.na(cotizacion) & cotizacion > 0,
+    !is.na(grupo),
+    !is.na(edad),
+    edad >= 20, edad < 100
+  ) %>%
+  mutate(
+    grupo = recode(grupo, A = "Activos", B = "No activos"),
+    rango_edad = cut(edad, breaks = c(20, 30, 40, 50, 60, 70, 100), right = FALSE)
+  ) %>%
+  group_by(grupo, rango_edad) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  ggplot(aes(x = rango_edad, y = n, fill = grupo)) +
+  geom_col(position = "dodge") +
   labs(
-    x = "Grupo",
-    y = "Edad"
+    x = "Rango de edad",
+    y = "Número de personas"
   ) +
   theme_minimal() +
   scale_fill_brewer(palette = "Pastel1")
+
 
 ```
 
@@ -216,7 +229,9 @@ sexo_prop <- cotizantes_pivotados %>%
   mutate(proporcion = n / sum(n))
 
 # Gráfico
-ggplot(sexo_prop, aes(x = grupo, y = proporcion, fill = Sexo)) +
+sexo_prop %>%
+  mutate(grupo = recode(grupo, A = "Activos", B = "No activos")) %>%
+  ggplot(aes(x = grupo, y = proporcion, fill = Sexo)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = scales::percent) +
   labs(
@@ -225,7 +240,9 @@ ggplot(sexo_prop, aes(x = grupo, y = proporcion, fill = Sexo)) +
     fill = "Sexo"
   ) +
   theme_minimal()
+
 ```
+
 
 
 ```{r}
@@ -241,7 +258,8 @@ cotizantes_pivotados %>%
 # se toma un solo valor de antigüedad por persona
 antiguedad_por_persona <- cotizantes_pivotados %>%
   select(ID, grupo, antiguedad_meses) %>%
-  distinct()
+  distinct() %>%
+  mutate(grupo = recode(grupo, A = "Activos", B = "No activos"))
 
 ggplot(antiguedad_por_persona, aes(x = grupo, y = antiguedad_meses, fill = grupo)) +
   geom_boxplot() +
@@ -250,7 +268,9 @@ ggplot(antiguedad_por_persona, aes(x = grupo, y = antiguedad_meses, fill = grupo
     y = "Antigüedad en meses"
   ) +
   theme_minimal() +
-  scale_fill_brewer(palette = "Set2")
+  scale_fill_brewer(palette = "Set2") +
+  theme(legend.position = "none")
+
 
 ```
 
