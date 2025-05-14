@@ -5,3 +5,49 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
+# Introducción
+
+Se cargan las librerías necesarias.
+
+```{r librerias}
+pacman::p_load(dplyr,
+               ggplot2,
+               readxl,
+               lubridate,
+               janitor,
+               tidyr)
+```
+
+Se leen las bases financieras.
+
+```{r datos_bases, message = FALSE}
+historico <-
+  read_excel("data/BD Financiero.xlsx", sheet = "Datos Historicos")
+activos <-
+  read_excel("data/BD Financiero.xlsx", sheet = "Activo-EEFF")
+resumen <-
+  read_excel("data/BD Financiero.xlsx", sheet = "EEFF")
+```
+
+Se hacen unas correcciones menores.
+
+```{r correcciones}
+# Se eliminan las columnas innecesarias
+historico <- historico %>% select(-c("Aux Tasa nominal n", "Aux Tasa nominal VF- n", "Aux Tasa nominal Formula"))
+
+# Se corrigen los nombres de columnas del resumen
+colnames(resumen) <- c("nombre", "diciembre_2024", "descripcion")
+
+# Se arreglan los nombres de las demás bases de datos
+historico <- historico %>% clean_names()
+activos <- activos %>% clean_names()
+```
+
+# Situación de proviciones y reservas
+
+A
+
+# Análisis de inversiones y gastos
+
+A
+
