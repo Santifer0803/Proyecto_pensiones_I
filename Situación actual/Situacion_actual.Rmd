@@ -33,7 +33,12 @@ Se hacen unas correcciones menores.
 
 ```{r correcciones}
 # Se eliminan las columnas innecesarias
-historico <- historico %>% select(-c("Aux Tasa nominal n", "Aux Tasa nominal VF- n", "Aux Tasa nominal Formula"))
+historico <-
+  historico %>% select(-c(
+    "Aux Tasa nominal n",
+    "Aux Tasa nominal VF- n",
+    "Aux Tasa nominal Formula"
+  ))
 
 # Se corrigen los nombres de columnas del resumen
 colnames(resumen) <- c("nombre", "diciembre_2024", "descripcion")
@@ -64,4 +69,13 @@ ggplot(activos, aes(x = periodo, y = aporte_por_cobrar / 1000000000)) +
   theme_minimal()
 ```
 
+Seguidamente, se pueden ver las plusvalías/minusvalías acumuladas.
+
+```{r grafico_aportes}
+ggplot(activos,
+       aes(x = periodo, y = plusvalias_minusvalias_acumuladas / 1000000000)) +
+  geom_line(color = "cornflowerblue", linewidth = 0.75) +
+  labs(x = "Periodo", y = "plusvalías/minusvalías (miles de millones de colones)") +
+  theme_minimal()
+```
 
