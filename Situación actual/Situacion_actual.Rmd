@@ -75,7 +75,7 @@ Seguidamente, se pueden ver las plusvalías/minusvalías acumuladas.
 ggplot(activos,
        aes(x = periodo, y = plusvalias_minusvalias_acumuladas / 1000000000)) +
   geom_line(color = "cornflowerblue", linewidth = 0.75) +
-  labs(x = "Periodo", y = "plusvalías/minusvalías (miles de millones de colones)") +
+  labs(x = "Periodo", y = "Plusvalías/minusvalías (miles de millones de colones)") +
   theme_minimal()
 ```
 
