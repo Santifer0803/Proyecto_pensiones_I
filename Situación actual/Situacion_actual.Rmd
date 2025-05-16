@@ -79,3 +79,22 @@ ggplot(activos,
   theme_minimal()
 ```
 
+Luego, se grafica el activo total, el activo a valor de mercado y el activo a valor contable.
+
+```{r grafico_activos}
+ggplot(activos, aes(x = periodo)) +
+  geom_line(aes(y = activo / 1000000000, color = "Valor bruto"), linewidth = 0.75) +
+  geom_line(aes(y = activo_neto_vm / 1000000000, color = "Valor de mercado"), linewidth = 0.75) +
+  geom_line(aes(y = activo_neto_vc / 1000000000, color = "Valor contable"), linewidth = 0.75) +
+  labs(x = "Periodo", y = "Activo (miles de millones de colones)") +
+  scale_colour_manual(
+    name = "Valor",
+    values = c(
+      "Valor bruto" = "#CCEDB1",
+      "Valor de mercado" = "#98D7B7",
+      "Valor contable" = "#5CC0C0"
+    )
+  ) +
+  theme_minimal()
+```
+
