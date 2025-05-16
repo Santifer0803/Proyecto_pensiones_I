@@ -41,6 +41,10 @@ colnames(resumen) <- c("nombre", "diciembre_2024", "descripcion")
 # Se arreglan los nombres de las demás bases de datos
 historico <- historico %>% clean_names()
 activos <- activos %>% clean_names()
+
+# Se pone el formato de fecha necesario
+activos$periodo <- activos$periodo %>% as.Date()
+historico$periodo <- historico$periodo %>% as.Date()
 ```
 
 # Situación de proviciones y reservas
@@ -49,5 +53,15 @@ A
 
 # Análisis de inversiones y gastos
 
-A
+## Análisis de activos
+
+En esta parte se pretenden analizar los distintos factores que afectan a los activos, inicialmente, se busca graficar el aporte por cobrar.
+
+```{r grafico_aporte}
+ggplot(activos, aes(x = periodo, y = aporte_por_cobrar / 1000000000)) +
+  geom_line(color = "blueviolet", linewidth = 0.75) +
+  labs(x = "Periodo", y = "Aporte por cobrar (miles de millones de colones)") +
+  theme_minimal()
+```
+
 
