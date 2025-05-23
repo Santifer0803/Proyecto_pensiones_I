@@ -73,6 +73,32 @@ ggplot(historico, aes(x = periodo)) +
   theme_minimal()
 ```
 
+## Activos y pasivos de la empresa 
+
+```{r}
+activos_resumen <- resumen[c(2: 19), ]
+
+ggplot(activos_resumen, aes(x = reorder(nombre, diciembre_2024), y = diciembre_2024/1000000000)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs( x = "Origen", y = "Monto") +
+  theme_minimal() +
+  coord_flip()
+
+
+```
+
+```{r}
+pasivos_resumen <- resumen[c(22: 32), ]
+
+ggplot(pasivos_resumen, aes(x = reorder(nombre, diciembre_2024), y = diciembre_2024/1000000000)) +
+  geom_bar(stat = "identity", fill = "darkred") +
+  labs( x = "Origen", y = "Monto") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
+
 # Análisis de inversiones y gastos
 
 ## Análisis de activos
