@@ -1,5 +1,5 @@
 ---
-title: "Situación_actual"
+title: "Informe Situación Actual"
 author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
 date: "`r Sys.Date()`"
 output: html_document
@@ -52,15 +52,59 @@ activos$periodo <- activos$periodo %>% as.Date()
 historico$periodo <- historico$periodo %>% as.Date()
 ```
 
-# Situación de proviciones y reservas
+# Situación de provisiones y reservas
 
-A
+Se inicia comparando las cotizaciones netas con el pago de pensiones a lo largo del periodo.
+
+```{r cotiz_pago_pens}
+ggplot(historico, aes(x = periodo)) +
+  geom_line(aes(y = cotizaciones_netas / 1000000, color = "Cotizaciones netas"),
+            linewidth = 0.75) +
+  geom_line(aes(y = pago_de_pensiones / 1000000, color = "Pago de pensiones"),
+            linewidth = 0.75) +
+  labs(x = "Periodo", y = "Monto (millones de colones)") +
+  scale_colour_manual(
+    name = "",
+    values = c(
+      "Cotizaciones netas" = "goldenrod",
+      "Pago de pensiones" = "darkseagreen3"
+    )
+  ) +
+  theme_minimal()
+```
+
+## Activos y pasivos de la empresa 
+
+```{r}
+activos_resumen <- resumen[c(2: 19), ]
+
+ggplot(activos_resumen, aes(x = reorder(nombre, diciembre_2024), y = diciembre_2024/1000000000)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs( x = "Origen", y = "Monto") +
+  theme_minimal() +
+  coord_flip()
+
+
+```
+
+```{r}
+pasivos_resumen <- resumen[c(22: 32), ]
+
+ggplot(pasivos_resumen, aes(x = reorder(nombre, diciembre_2024), y = diciembre_2024/1000000000)) +
+  geom_bar(stat = "identity", fill = "darkred") +
+  labs( x = "Origen", y = "Monto") +
+  theme_minimal() +
+  coord_flip()
+
+```
+
 
 # Análisis de inversiones y gastos
 
 ## Análisis de activos
 
-En esta parte se pretenden analizar los distintos factores que afectan a los activos, inicialmente, se busca graficar el aporte por cobrar.
+En esta parte se pretenden analizar los distintos factores que afectan a los activos.
+Inicialmente, se busca graficar el aporte por cobrar.
 
 ```{r grafico_aporte}
 ggplot(activos, aes(x = periodo, y = aporte_por_cobrar / 1000000000)) +
@@ -84,8 +128,10 @@ Luego, se grafica el activo total, el activo a valor de mercado y el activo a va
 ```{r grafico_activos}
 ggplot(activos, aes(x = periodo)) +
   geom_line(aes(y = activo / 1000000000, color = "Valor bruto"), linewidth = 0.75) +
-  geom_line(aes(y = activo_neto_vm / 1000000000, color = "Valor de mercado"), linewidth = 0.75) +
-  geom_line(aes(y = activo_neto_vc / 1000000000, color = "Valor contable"), linewidth = 0.75) +
+  geom_line(aes(y = activo_neto_vm / 1000000000, color = "Valor de mercado"),
+            linewidth = 0.75) +
+  geom_line(aes(y = activo_neto_vc / 1000000000, color = "Valor contable"),
+            linewidth = 0.75) +
   labs(x = "Periodo", y = "Activo (miles de millones de colones)") +
   scale_colour_manual(
     name = "Valor",
