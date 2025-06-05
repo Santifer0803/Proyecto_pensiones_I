@@ -5,3 +5,67 @@ date: '`r Sys.Date()`'
 output: html_document
 ---
 
+Se instala pacman, para compatibilidad de librerías.
+
+```{r}
+pacman::p_load(dplyr, ggplot2, readxl, stringr)
+```
+
+
+# Base de Datos 
+
+Se carga la base de datos.
+
+```{r}
+data_cotizantes <- read_excel("data/BD_Cotizantes1.xlsx")
+head(data_cotizantes)
+```
+Como los datos de las fechas no vienen en un formato adecuado, entonces se procede a anualizar los salarios y se le da forma a la base de datos. 
+
+```{r}
+meses_to_annos <- function(df, columnas_excluir, anno_inicio = 1995) {
+  # Se extraen las columnas que serán los meses.
+  columnas_mensuales <- setdiff(names(df), columnas_excluir)
+  
+  # Número total de columnas mensuales
+  n_meses <- length(columnas_mensuales)
+  n_annos <- floor(n_meses / 12)
+  
+  # Se genera nombres de años, según cuántos bloques de 12 haya
+  nombres_annos <- as.character(seq(anno_inicio, by = 1, length.out = n_annos))
+  
+  # Se calculan los promedios anuales
+  annos <- lapply(1:n_annos, function(i) {
+    cols <- columnas_mensuales[((i - 1) * 12 + 1):(i * 12)]
+    rowMeans(df[, cols], na.rm = TRUE)
+  })
+  
+  # Dataframe de promedios
+  df_anual <- as.data.frame(annos)
+  names(df_anual) <- nombres_annos
+  
+  # Se combinan columnas fijas + promedios anuales
+  data_cotizantes_final <- cbind(df[, columnas_excluir], df_anual)
+  return(data_cotizantes_final)
+}
+```
+
+Se cambia el formato de los nombres de las variables. 
+
+```{r}
+columnas_excluir <- c("ID", "Fec.Nac", "Sexo")
+df_anualizado <- meses_to_annos(data_cotizantes, columnas_excluir, anno_inicio = 1995)
+```
+
+Se calcula el máximo de la base de datos, para corroborar que no hay salarios que excedan los 5 millones, por lo que no hay cotización máxima.
+```{r}
+max(unlist(data_cotizantes), na.rm = TRUE)
+```
+
+Se calculan las edades de los individuos del data set para su posterior uso. 
+
+```{r}
+df_anualizado$Fec.Nac <- as.Date(df_anualizado$Fec.Nac, format = "%Y/%m/%d")
+df_anualizado$edad_actual <- 2024 - as.numeric(format(df_anualizado$Fec.Nac, "%Y"))
+```
+
