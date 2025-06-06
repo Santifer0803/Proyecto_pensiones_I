@@ -95,8 +95,8 @@ df.anualizado$Edad.actual <- 2024 - as.numeric(format(df.anualizado$Fec.Nac, "%Y
 Se procede a determinar la tasa de rendimiento a partir de los rendimientos históricos de los activos del fondo.
 
 ```{r tasa_rendimiento}
-# Se crea un nuevo DataFrame eliminando las columnas 1, 4, 5 y 6 del DataFrame original de activos
-df.act <- activos[, -c(1, 4, 5, 6)]
+# Se crea un nuevo DataFrame eliminando las columnas 1, 4, 5, 6, 7 y 8 del DataFrame original de activos
+df.act <- activos[, -c(1, 4, 5, 6, 7, 8)]
 
 # Se filtran las observaciones para que solo queden las que tienen fecha a partir del 1 de diciembre de 2022
 df.act <- df.act %>%
@@ -104,12 +104,6 @@ df.act <- df.act %>%
 
 # Se calcula el rendimiento mensual del activo total
 df.act$rend <- c(NA, diff(df.act$activo) / head(df.act$activo, -1))
-
-# Se calcula el rendimiento mensual del activo neto a valor de mercado
-df.act$rend.vm <- c(NA, diff(df.act$activo_neto_vm) / head(df.act$activo_neto_vm, -1))
-
-# Se calcula el rendimiento mensual del activo neto a valor contable
-df.act$rend.vc <- c(NA, diff(df.act$activo_neto_vc) / head(df.act$activo_neto_vc, -1))
 
 # Se elimina la primera fila que contiene NA
 df.act <- df.act[-1, ]
@@ -120,18 +114,12 @@ tasa.mensual <- prod(1 + df.act$rend)^(1 / length(df.act$rend)) - 1
 # Se anualiza la tasa mensual
 tasa.anual <- (1 + tasa.mensual)^12 - 1
 
-# Se calcula la tasa mensual del rendimiento del activo neto a valor de mercado
-tasa.mensual.vm <- prod(1 + df.act$rend.vm)^(1 / length(df.act$rend.vm)) - 1
-
-# Se anualiza la tasa mensual a valor de mercado
-tasa.anual.vm <- (1 + tasa.mensual.vm)^12 - 1
-
-# Se calcula la tasa mensual del rendimiento del activo neto a valor contable
-tasa.mensual.vc <- prod(1 + df.act$rend.vc)^(1 / length(df.act$rend.vc)) - 1
-
-# Se anualiza la tasa mensual a valor contable
-tasa.anual.vc <- (1 + tasa.mensual.vc)^12 - 1
-
+# Se grafican los rendimientos mensuales del activo desde hace 3 años
+ggplot(df.act, aes(x = periodo, y = rend)) +
+  geom_col(fill = "darkgreen") +
+  labs(x = "Periodo", y = "Rendimiento") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
 ```
 
 
