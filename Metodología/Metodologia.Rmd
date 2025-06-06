@@ -1,71 +1,137 @@
 ---
-title: "Metodologia"
+title: "Metodología"
 author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
 date: '`r Sys.Date()`'
-output: html_document
+output: html.document
 ---
 
 Se instala pacman, para compatibilidad de librerías.
 
 ```{r}
-pacman::p_load(dplyr, ggplot2, readxl, stringr)
+pacman::p_load(dplyr, 
+               ggplot2, 
+               readxl, 
+               stringr,
+               janitor)
 ```
 
+# Bases de Datos 
 
-# Base de Datos 
+Se cargan las bases de datos.
 
-Se carga la base de datos.
+```{r bases_datos, message = FALSE}
+data.cotizantes <- read_excel("data/BD_Cotizantes.xlsx")
 
-```{r}
-data_cotizantes <- read_excel("data/BD_Cotizantes1.xlsx")
-head(data_cotizantes)
+activos <- read_excel("data/BD_Financiero.xlsx", sheet = "Activo-EEFF")
 ```
+
+Se hacen unas correcciones menores a la base de activos.
+
+```{r correcciones}
+# Se corrigen los nombres de las columnas
+activos <- activos %>% clean_names()
+
+# Se pone el formato de fecha necesario
+activos$periodo <- activos$periodo %>% as.Date()
+```
+
 Como los datos de las fechas no vienen en un formato adecuado, entonces se procede a anualizar los salarios y se le da forma a la base de datos. 
 
 ```{r}
-meses_to_annos <- function(df, columnas_excluir, anno_inicio = 1995) {
-  # Se extraen las columnas que serán los meses.
-  columnas_mensuales <- setdiff(names(df), columnas_excluir)
+meses.to.annos <- function(df, columnas.excluir, anno.inicio = 1995) {
+  # Se extraen las columnas que serán los meses
+  columnas.mensuales <- setdiff(names(df), columnas.excluir)
   
   # Número total de columnas mensuales
-  n_meses <- length(columnas_mensuales)
-  n_annos <- floor(n_meses / 12)
+  n.meses <- length(columnas.mensuales)
+  n.annos <- floor(n.meses / 12)
   
-  # Se genera nombres de años, según cuántos bloques de 12 haya
-  nombres_annos <- as.character(seq(anno_inicio, by = 1, length.out = n_annos))
+  # Se generan los nombres de los años, según cuántos bloques de 12 haya
+  nombres.annos <- as.character(seq(anno.inicio, by = 1, length.out = n.annos))
   
   # Se calculan los promedios anuales
-  annos <- lapply(1:n_annos, function(i) {
-    cols <- columnas_mensuales[((i - 1) * 12 + 1):(i * 12)]
+  annos <- lapply(1:n.annos, function(i) {
+    cols <- columnas.mensuales[((i - 1) * 12 + 1):(i * 12)]
+    
     rowMeans(df[, cols], na.rm = TRUE)
+    
   })
   
-  # Dataframe de promedios
-  df_anual <- as.data.frame(annos)
-  names(df_anual) <- nombres_annos
+  # DataFrame de promedios
+  df.anual <- as.data.frame(annos)
+  names(df.anual) <- nombres.annos
   
   # Se combinan columnas fijas + promedios anuales
-  data_cotizantes_final <- cbind(df[, columnas_excluir], df_anual)
-  return(data_cotizantes_final)
+  data.cotizantes.final <- cbind(df[, columnas.excluir], df.anual)
+  return(data.cotizantes.final)
 }
 ```
 
 Se cambia el formato de los nombres de las variables. 
 
 ```{r}
-columnas_excluir <- c("ID", "Fec.Nac", "Sexo")
-df_anualizado <- meses_to_annos(data_cotizantes, columnas_excluir, anno_inicio = 1995)
+columnas.excluir <- c("ID", "Fec.Nac", "Sexo")
+df.anualizado <- meses.to.annos(data.cotizantes, 
+                                columnas.excluir, 
+                                anno.inicio = 1995)
 ```
 
 Se calcula el máximo de la base de datos, para corroborar que no hay salarios que excedan los 5 millones, por lo que no hay cotización máxima.
+
 ```{r}
-max(unlist(data_cotizantes), na.rm = TRUE)
+max(unlist(data.cotizantes), na.rm = TRUE)
 ```
 
 Se calculan las edades de los individuos del data set para su posterior uso. 
 
 ```{r}
-df_anualizado$Fec.Nac <- as.Date(df_anualizado$Fec.Nac, format = "%Y/%m/%d")
-df_anualizado$edad_actual <- 2024 - as.numeric(format(df_anualizado$Fec.Nac, "%Y"))
+df.anualizado$Fec.Nac <- as.Date(df.anualizado$Fec.Nac, format = "%Y/%m/%d")
+
+df.anualizado$Edad.actual <- 2024 - as.numeric(format(df.anualizado$Fec.Nac, "%Y"))
 ```
+
+# Tasa de rendimiento
+
+Se procede a determinar la tasa de rendimiento a partir de los rendimientos históricos de los activos del fondo.
+
+```{r tasa_rendimiento}
+# Se crea un nuevo DataFrame eliminando las columnas 1, 4, 5 y 6 del DataFrame original de activos
+df.act <- activos[, -c(1, 4, 5, 6)]
+
+# Se filtran las observaciones para que solo queden las que tienen fecha a partir del 1 de diciembre de 2022
+df.act <- df.act %>%
+  filter(periodo >= as.Date("2022-12-01"))
+
+# Se calcula el rendimiento mensual del activo total
+df.act$rend <- c(NA, diff(df.act$activo) / head(df.act$activo, -1))
+
+# Se calcula el rendimiento mensual del activo neto a valor de mercado
+df.act$rend.vm <- c(NA, diff(df.act$activo_neto_vm) / head(df.act$activo_neto_vm, -1))
+
+# Se calcula el rendimiento mensual del activo neto a valor contable
+df.act$rend.vc <- c(NA, diff(df.act$activo_neto_vc) / head(df.act$activo_neto_vc, -1))
+
+# Se elimina la primera fila que contiene NA
+df.act <- df.act[-1, ]
+
+# Se calcula la tasa mensual geométrica del rendimiento total del activo
+tasa.mensual <- prod(1 + df.act$rend)^(1 / length(df.act$rend)) - 1
+
+# Se anualiza la tasa mensual
+tasa.anual <- (1 + tasa.mensual)^12 - 1
+
+# Se calcula la tasa mensual del rendimiento del activo neto a valor de mercado
+tasa.mensual.vm <- prod(1 + df.act$rend.vm)^(1 / length(df.act$rend.vm)) - 1
+
+# Se anualiza la tasa mensual a valor de mercado
+tasa.anual.vm <- (1 + tasa.mensual.vm)^12 - 1
+
+# Se calcula la tasa mensual del rendimiento del activo neto a valor contable
+tasa.mensual.vc <- prod(1 + df.act$rend.vc)^(1 / length(df.act$rend.vc)) - 1
+
+# Se anualiza la tasa mensual a valor contable
+tasa.anual.vc <- (1 + tasa.mensual.vc)^12 - 1
+
+```
+
 
