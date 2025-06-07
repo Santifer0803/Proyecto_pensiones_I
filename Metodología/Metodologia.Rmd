@@ -2,7 +2,7 @@
 title: "Metodología"
 author: "Alejandro Brenes, Santiago Fernández, Eyeri Méndez y Erick Venegas"
 date: '`r Sys.Date()`'
-output: html.document
+output: html_document
 ---
 
 Se instala pacman, para compatibilidad de librerías.
