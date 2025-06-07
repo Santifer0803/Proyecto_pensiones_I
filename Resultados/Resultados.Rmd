@@ -80,3 +80,13 @@ invalidez$Mujeres <- as.numeric(invalidez$Mujeres)
 invalidez <- invalidez %>% clean_names()
 ```
 
+# Modelo básico
+
+## Parte determinista
+
+En esta sección se concentran las variables invariantes. Es decir, aquellas que no cambiarán durante las iteraciones del modelo.
+
+## Parte estocástica
+
+En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
+
