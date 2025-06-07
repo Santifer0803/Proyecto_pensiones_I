@@ -55,6 +55,28 @@ Las probabilidades aparecen como caracteres, por lo que se realiza el cambio cor
 
 ```{r correcciones_mort}
 # Se cambia el formato necesario
-mortalidad$qx <- as.double(mortalidad$qx)
+mortalidad$qx <- as.numeric(mortalidad$qx)
+```
+
+## Probabilidades de invalidez
+
+Se procede a cargar las probabilidades de invalidez.
+
+```{r carga_inv}
+invalidez <- read_excel("data/invalidez.xlsx")
+```
+
+Todas las columnas salen como caracteres, por lo que se cambian.
+
+```{r correcciones_inv}
+# Se ponen las edades como números enteros
+invalidez$Edad <- as.integer(invalidez$Edad)
+
+# Se corrigen las probabilidades
+invalidez$Hombres <- as.numeric(invalidez$Hombres)
+invalidez$Mujeres <- as.numeric(invalidez$Mujeres)
+
+# Se corrigen los nombres a un formato más simple
+invalidez <- invalidez %>% clean_names()
 ```
 
