@@ -21,7 +21,7 @@ pacman::p_load(janitor,
 
 Se leen las bases de cotizantes y pensionados.
 
-```{r datos_cotpen, message = FALSE, warning = FALSE}
+```{r carga_cotpen, message = FALSE, warning = FALSE}
 cotizantes <- read_excel("data/BD_Cotizantes.xlsx")
 pensionados <- read_excel("data/BD_Pensionados.xlsx")
 ```
@@ -48,6 +48,13 @@ pensionados <- pensionados %>% clean_names() %>% select(-c("x9"))
 Se cargan los datos de mortalidad dinámmicos de la SUPEN.
 
 ```{r carga_mort}
-#mortalidad <- read_excel("data/BD_Cotizantes.xlsx")
+mortalidad <- read_excel("data/mortalidad.xls")
+```
+
+Las probabilidades aparecen como caracteres, por lo que se realiza el cambio correspondiente.
+
+```{r correcciones_mort}
+# Se cambia el formato necesario
+mortalidad$qx <- as.double(mortalidad$qx)
 ```
 
