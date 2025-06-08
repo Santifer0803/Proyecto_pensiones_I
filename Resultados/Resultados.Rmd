@@ -94,6 +94,8 @@ invalidez <- setDT(invalidez)
 En esta sección se concentran las variables invariantes. Es decir, aquellas que no cambiarán durante las iteraciones del modelo.
 
 ```{r deterministica_base}
+### Beneficios de los cotizantes sin contar estado ###
+
 # Se inicia creando la matriz de edades de los cotizantes, iniciando en la edad del 2025
 edades <-
   matrix((2025 - year(cotizantes$fec_nac)),
@@ -124,6 +126,8 @@ edades.m <- edades[which(cotizantes$sexo == 2),]
 # Se eliminan las edades conjuntas
 rm(edades)
 
+### Distintos estados a considerar ###
+
 # Probabilidades de invalidez por sexo
 inv.h <-
   matrix(
@@ -139,6 +143,24 @@ inv.m <-
     nrow = nrow(edades.m),
     byrow = FALSE
   )
+
+# Para las probabilidades de muerte, se inicia creando las matrices vacías
+mort.h <- matrix(0, nrow = nrow(edades.h), ncol = ncol(edades.h))
+mort.m <- matrix(0, nrow = nrow(edades.m), ncol = ncol(edades.m))
+
+# Se corrigen los nombres de sus columnas
+colnames(mort.h) <- colnames(edades.h)
+colnames(mort.m) <- colnames(edades.m)
+
+# Se agregan las probabilidades por cada año (columna), para ambos sexos
+for(i in 1:ncol(mort.h)) {
+  mort.h[, i] <-
+    mortalidad[sex == 1 &
+                 year == as.double(colnames(mort.h)[i])][.(edad = edades.h[, i]), on = .(edad), qx]
+  mort.m[, i] <-
+    mortalidad[sex == 2 &
+                 year == as.double(colnames(mort.m)[i])][.(edad = edades.m[, i]), on = .(edad), qx]
+}
 ```
 
 
