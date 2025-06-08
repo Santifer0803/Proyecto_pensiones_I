@@ -11,8 +11,9 @@ output: html_document
 
 Inicialmente, cargamos las librerías necesarias para el desarrollo del modelo.
 
-```{r librerias}
-pacman::p_load(janitor,
+```{r librerias, message = FALSE, warning = FALSE}
+pacman::p_load(data.table,
+               janitor,
                readxl,
                tidyverse)
 ```
@@ -56,6 +57,9 @@ Las probabilidades aparecen como caracteres, por lo que se realiza el cambio cor
 ```{r correcciones_mort}
 # Se cambia el formato necesario
 mortalidad$qx <- as.numeric(mortalidad$qx)
+
+# Se guarda como DataTable
+mortalidad <- setDT(mortalidad)
 ```
 
 ## Probabilidades de invalidez
@@ -78,6 +82,9 @@ invalidez$Mujeres <- as.numeric(invalidez$Mujeres)
 
 # Se corrigen los nombres a un formato más simple
 invalidez <- invalidez %>% clean_names()
+
+# Se guarda como DataTable
+invalidez <- setDT(invalidez)
 ```
 
 # Modelo básico
@@ -85,6 +92,55 @@ invalidez <- invalidez %>% clean_names()
 ## Parte determinista
 
 En esta sección se concentran las variables invariantes. Es decir, aquellas que no cambiarán durante las iteraciones del modelo.
+
+```{r deterministica_base}
+# Se inicia creando la matriz de edades de los cotizantes, iniciando en la edad del 2025
+edades <-
+  matrix((2025 - year(cotizantes$fec_nac)),
+         nrow = nrow(cotizantes),
+         ncol = 95,
+         byrow = FALSE
+  )
+
+# Se pone el año en cada columna
+colnames(edades) <- format(seq(
+  from = ymd("2025-01-01"),
+  to = ymd("2119-01-01"),
+  by = "1 year"
+), "%Y")
+
+# Se cambia la edad en cada columna
+for (i in 2:ncol(edades)) {
+  edades[, i] <- edades[, (i - 1)] + 1
+}
+
+# Se corrije la edad máxima a 115
+edades <- ifelse(edades > 115, 115, edades)
+
+# Se separan las edades por sexo
+edades.h <- edades[which(cotizantes$sexo == 1),]
+edades.m <- edades[which(cotizantes$sexo == 2),]
+
+# Se eliminan las edades conjuntas
+rm(edades)
+
+# Probabilidades de invalidez por sexo
+inv.h <-
+  matrix(
+    invalidez[match(edades.h, edad), hombres],
+    ncol = ncol(edades.h),
+    nrow = nrow(edades.h),
+    byrow = FALSE
+  )
+inv.m <-
+  matrix(
+    invalidez[match(edades.m, edad), mujeres],
+    ncol = ncol(edades.m),
+    nrow = nrow(edades.m),
+    byrow = FALSE
+  )
+```
+
 
 ## Parte estocástica
 
