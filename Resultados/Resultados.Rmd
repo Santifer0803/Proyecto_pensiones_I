@@ -659,6 +659,14 @@ base_cotizaciones <- base_cotizaciones %>%
   ) 
 ```
 
+
+```{r}
+base_cotizaciones <- base_cotizaciones %>%
+  mutate(cantidad_cotizada = round((densidad_cotizacion * 12) / 100))
+```
+
+
+
 Se grafica la distribución de la densidad de las cotizaciones para su posterior análisis.
 
 ```{r}
