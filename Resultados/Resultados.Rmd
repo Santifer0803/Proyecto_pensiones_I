@@ -808,7 +808,7 @@ estados.h <-
            lista.estados.h[[1]] == 1,
            "Invalido",
            ifelse(
-             postergacion.simulada.h == 1,
+             ((postergacion.simulada.h == 1) * (actividad.h == 1)) == 1,
              "Posterga",
              ifelse(
                edades.h > 64,
@@ -824,7 +824,7 @@ estados.m <-
            lista.estados.m[[1]] == 1,
            "Invalido",
            ifelse(
-             postergacion.simulada.m == 1,
+             ((postergacion.simulada.m == 1) * (actividad.m == 1)) == 1,
              "Posterga",
              ifelse(
                edades.m > 64,
