@@ -751,149 +751,28 @@ colnames(df.probabilidad.postergacion.m) <- colnames(edades.m)
 
 ## Parte Estocástica
 
-Vamos a crear las dos matrices aleatorias usando distribución uniforme.
-Se crean dos matrices, para los respectivos sexos.
+En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
 
-```{r}
-matriz.aleatoria.h1<- matrix(runif(2595 * 95), nrow = 2595, ncol = 95)
-colnames(matriz.aleatoria.h1) <- colnames(edades.h)
+```{r estocastica_base}
+### Beneficios de los cotizantes sin contar estado ###
 
-matriz.aleatoria.h2 <- matrix(runif(2595 * 95), nrow = 2595, ncol = 95)
-colnames(matriz.aleatoria.h2) <- colnames(edades.h)
-```
+# Vamos a crear las dos matrices aleatorias usando distribución uniforme.
+matriz.aleatoria.h <- matrix(runif(2595 * 95), nrow = 2595, ncol = 95)
+matriz.aleatoria.m <- matrix(runif(2601 * 95), nrow = 2601, ncol = 95)
 
-
-
-```{r}
-matriz.aleatoria.m1<- matrix(runif(2601 * 95), nrow = 2601, ncol = 95)
-colnames(matriz.aleatoria.m1) <- colnames(edades.m)
-
-matriz.aleatoria.m2 <- matrix(runif(2601 * 95), nrow = 2601, ncol = 95)
-colnames(matriz.aleatoria.m2) <- colnames(edades.m)
-```
-
-```{r}
-cols_anios <- as.character(1995:2024)
-
-data_binaria <- data_anual_sumado
-
-data_binaria[cols_anios] <- lapply(data_binaria[cols_anios], function(x) ifelse(x == 0, 0, 1))
-```
-
-
-```{r}
-cols_anios <- as.character(1995:2024)
-
-probabilidades_anuales <- sapply(data_binaria[cols_anios], function(columna) {
-  mean(columna == 1)  
-})
-
-probabilidades_df <- data.frame(
-  anio = as.integer(names(probabilidades_anuales)),
-  probabilidad_activo = probabilidades_anuales
-)
-```
-
-
-```{r}
-proba.activo <- probabilidades_df %>%
-  filter(anio == 2023) %>%
-  pull(probabilidad_activo)
-proba.activo
-```
-
-```{r}
-sum(df.anualizado == 0, na.rm = TRUE)
-dim(df.anualizado)
-```
-```{r}
-# Se crea la matriz de hombres
-inactivo.h <- matrix(0.4148383, nrow = 2595, ncol = 95)
-
-# Se crea la matriz de mujeres
-inactivo.m <- matrix(0.4148383, nrow = 2601, ncol = 95)
-```
-
-
-```{r}
-inactividad.simulada.h <- ifelse(matriz.aleatoria.h1 < inactivo.h, 1, 0)
-inactividad.simulada.m <- ifelse(matriz.aleatoria.m1 < inactivo.m, 1, 0)
-```
-
-
-```{r}
-inactividad.simulada.h <- inactividad.simulada.h + 1
-inactividad.simulada.m <- inactividad.simulada.m + 1
-```
-
-
-```{r}
-postergacion.simulada.h <- matriz.aleatoria.h2 < df.probabilidad.postergacion.h
+# Se continúa con las matrices de probabilidades de postergación
+postergacion.simulada.h <- matriz.aleatoria.h < df.probabilidad.postergacion.h
+postergacion.simulada.m <- matriz.aleatoria.m < df.probabilidad.postergacion.m
 
 # Se corrigen las postergaciones incorrectas
 postergacion.simulada.h <- t(apply(postergacion.simulada.h, 1, function(fila){
   corte <- cumsum(fila == 0 & cumsum(fila) > 0)
   fila <- fila * (corte == 0)
 }))
-```
-
-
-```{r}
-postergacion.simulada.m <- matriz.aleatoria.m2 < df.probabilidad.postergacion.m
-
-
-# Se corrigen las postergaciones incorrectas
 postergacion.simulada.m <- t(apply(postergacion.simulada.m, 1, function(fila){
   corte <- cumsum(fila == 0 & cumsum(fila) > 0)
   fila <- fila * (corte == 0)
 }))
-```
-
-
-```{r}
-actividad.simulada.h <- postergacion.simulada.h * inactividad.simulada.h
-actividad.simulada.m <- postergacion.simulada.m * inactividad.simulada.m
-```
-
-
-```{r}
-anios.postergados.h <- rowSums(postergacion.simulada.h)
-anios.postergados.h <- as.data.frame(anios.postergados.h)
-
-anios.postergados.m <- rowSums(postergacion.simulada.m)
-anios.postergados.m <- as.data.frame(anios.postergados.m)
-```
-
-
-```{r}
-mayores.65.h <- ifelse(edades.h > 65, 1, 0)
-mayores.65.m <- ifelse(edades.m > 65, 1, 0)
-```
-
-
-```{r}
-resultado.h <- mayores.65.h * actividad.simulada.h
-resultado.m <- mayores.65.m * actividad.simulada.m
-```
-
-
-```{r}
-binario.resultado.h <- ifelse(resultado.h > 0, 1, 0)
-binario.resultado.m <- ifelse(resultado.m > 0, 1, 0)
-```
-
-
-```{r}
-suma.binario.resultado.h <- rowSums(binario.resultado.h)
-suma.binario.resultado.m <- rowSums(binario.resultado.m)
-```
-
-En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
-
-```{r estocastica_base}
-### Beneficios de los cotizantes sin contar estado ###
-
-
 
 ### Distintos estados a considerar ###
 
