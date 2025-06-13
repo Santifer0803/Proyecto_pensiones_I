@@ -812,28 +812,25 @@ inactividad.simulada.m <- inactividad.simulada.m + 1
 
 
 ```{r}
-postergacion.simulada.h <- ifelse(matriz.aleatoria.h2 < df.probabilidad.postergacion.h, 1, 0)
+postergacion.simulada.h <- matriz.aleatoria.h2 < df.probabilidad.postergacion.h
 
-
-for (i in 1:nrow(postergacion.simulada.h)) {
-  primera_no_postergacion <- which(postergacion.simulada.h[i, ] == 0)[1]
-  if (!is.na(primera_no_postergacion)) {
-    postergacion.simulada.h[i, (primera_no_postergacion + 1):ncol(postergacion.simulada.h)] <- 0
-  }
-}
+# Se corrigen las postergaciones incorrectas
+postergacion.simulada.h <- t(apply(postergacion.simulada.h, 1, function(fila){
+  corte <- cumsum(fila == 0 & cumsum(fila) > 0)
+  fila <- fila * (corte == 0)
+}))
 ```
 
 
 ```{r}
-postergacion.simulada.m <- ifelse(matriz.aleatoria.m2 < df.probabilidad.postergacion.m, 1, 0)
+postergacion.simulada.m <- matriz.aleatoria.m2 < df.probabilidad.postergacion.m
 
 
-for (i in 1:nrow(postergacion.simulada.m)) {
-  primera_no_postergacion <- which(postergacion.simulada.m[i, ] == 0)[1]
-  if (!is.na(primera_no_postergacion)) {
-    postergacion.simulada.m[i, (primera_no_postergacion + 1):ncol(postergacion.simulada.m)] <- 0
-  }
-}
+# Se corrigen las postergaciones incorrectas
+postergacion.simulada.m <- t(apply(postergacion.simulada.m, 1, function(fila){
+  corte <- cumsum(fila == 0 & cumsum(fila) > 0)
+  fila <- fila * (corte == 0)
+}))
 ```
 
 
@@ -954,6 +951,24 @@ estados.m <- t(apply(estados.m, 1, function(fila) {
   if (all(c("Invalido", "Retirado") %in% fila)) {
     fila[fila %in% c("Invalido", "Retirado")] <-
       fila[which(fila %in% c("Invalido", "Retirado"))[1]]
+  }
+  fila
+}))
+
+# Ahora, existe el caso en donde una persona retirada puede postergar, por lo que se corrije ese caso
+estados.h <- t(apply(estados.h, 1, function(fila) {
+  if ((all(c("Posterga", "Retirado") %in% fila)) &&
+      (which(fila == "Retirado")[1] < which(fila == "Posterga")[1])) {
+    fila[fila %in% c("Posterga", "Retirado")] <-
+      fila[which(fila %in% c("Posterga", "Retirado"))[1]]
+  }
+  fila
+}))
+estados.m <- t(apply(estados.m, 1, function(fila) {
+  if ((all(c("Posterga", "Retirado") %in% fila)) &&
+      (which(fila == "Retirado")[1] < which(fila == "Posterga")[1])) {
+    fila[fila %in% c("Posterga", "Retirado")] <-
+      fila[which(fila %in% c("Posterga", "Retirado"))[1]]
   }
   fila
 }))
