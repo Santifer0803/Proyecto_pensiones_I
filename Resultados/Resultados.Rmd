@@ -602,7 +602,23 @@ df_proyeccion_ancha <- df_proyeccion_completa %>%
     values_from = salario_proyectado
   )
 
-view(df_proyeccion_ancha)
+# Se filtra la proyección para dejar los salarios futuros
+df_proyeccion_completa <- df_proyeccion_completa %>% 
+  filter(anio > 2024) %>% 
+  mutate(salario_proyectado = ifelse(edad > 115, 0, salario_proyectado))
+
+# Se hace una matriz con los salarios
+matriz.salarios <-
+  matrix(
+    df_proyeccion_completa$salario_proyectado,
+    nrow = nrow(cotizantes),
+    ncol = 95,
+    byrow = TRUE
+  )
+
+# Se filtra por sexo
+salarios.h <- matriz.salarios[which(cotizantes$sexo == 1), ]
+salarios.m <- matriz.salarios[which(cotizantes$sexo == 2), ]
 ```
 
 Se calcula el total de cotizaciones por persona.
@@ -972,5 +988,9 @@ estados.m <- t(apply(estados.m, 1, function(fila) {
   }
   fila
 }))
+
+# Se obtiene el salario, separado por sexo
+salario.estoc.h <- salarios.h * ((estados.h == "Activo") + (estados.h == "Posterga"))
+salario.estoc.m <- salarios.m * ((estados.m == "Activo") + (estados.m == "Posterga"))
 ```
 
