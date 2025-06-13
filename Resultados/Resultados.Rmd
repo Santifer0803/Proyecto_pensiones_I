@@ -16,11 +16,9 @@ pacman::p_load(data.table,
                janitor,
                readxl,
                tidyverse,
-               dplyr,
                lubridate,
                zoo,
-               purrr,
-               tidyr)
+               purrr)
 ```
 
 ## Datos del régimen
@@ -94,7 +92,7 @@ invalidez <- setDT(invalidez)
 
 # Modelo básico
 
-## Parte determinista
+## Parte Determinista
 
 En esta sección se concentran las variables invariantes. Es decir, aquellas que no cambiarán durante las iteraciones del modelo.
 
@@ -175,39 +173,6 @@ for (i in 1:ncol(mort.h)) {
 lista.estados.h <- list()
 lista.estados.m <- list()
 ```
-
-
-## Parte estocástica
-
-En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
-
-```{r estocastica_base}
-### Beneficios de los cotizantes sin contar estado ###
-
-
-
-### Distintos estados a considerar ###
-
-# Matriz de uniformes para comparar con las prob. de muerte e invalidez
-estado.h <-
-  matrix(runif((ncol(mort.h) * nrow(mort.h))), nrow = nrow(mort.h), ncol = ncol(mort.h))
-estado.m <-
-  matrix(runif((ncol(mort.m) * nrow(mort.m))), nrow = nrow(mort.m), ncol = ncol(mort.m))
-
-# Comparación de matrices, en el primer espacio está la invalidez y en el segundo la muerte
-lista.estados.h[[1]] <- inv.h >= estado.h
-lista.estados.h[[2]] <-
-  t(apply((mort.h >= estado.h) * ifelse(lista.estados.h[[1]] == 1, 0, 1), 1, function(fila) {
-    cumsum(fila) > 0
-  }))
-lista.estados.m[[1]] <- inv.m >= estado.m
-lista.estados.m[[2]] <-
-  t(apply((mort.m >= estado.m) * ifelse(lista.estados.m[[1]] == 1, 0, 1), 1, function(fila) {
-    cumsum(fila) > 0
-  }))
-```
-
-# Parte Deterministica
 
 Se carga la base de datos con la información de los salarios de los contizantes.
 
@@ -749,7 +714,7 @@ colnames(df.probabilidad.postergacion.m) <- colnames(edades.m)
 ```
 
 
-## Parte Estocástica (Venegas): Luego borramos esto.
+## Parte Estocástica
 
 Vamos a crear las dos matrices aleatorias usando distribución uniforme.
 Se crean dos matrices, para los respectivos sexos.
@@ -895,4 +860,30 @@ suma.binario.resultado.h <- rowSums(binario.resultado.h)
 suma.binario.resultado.m <- rowSums(binario.resultado.m)
 ```
 
+En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
 
+```{r estocastica_base}
+### Beneficios de los cotizantes sin contar estado ###
+
+
+
+### Distintos estados a considerar ###
+
+# Matriz de uniformes para comparar con las prob. de muerte e invalidez
+estado.h <-
+  matrix(runif((ncol(mort.h) * nrow(mort.h))), nrow = nrow(mort.h), ncol = ncol(mort.h))
+estado.m <-
+  matrix(runif((ncol(mort.m) * nrow(mort.m))), nrow = nrow(mort.m), ncol = ncol(mort.m))
+
+# Comparación de matrices, en el primer espacio está la invalidez y en el segundo la muerte
+lista.estados.h[[1]] <- inv.h >= estado.h
+lista.estados.h[[2]] <-
+  t(apply((mort.h >= estado.h) * ifelse(lista.estados.h[[1]] == 1, 0, 1), 1, function(fila) {
+    cumsum(fila) > 0
+  }))
+lista.estados.m[[1]] <- inv.m >= estado.m
+lista.estados.m[[2]] <-
+  t(apply((mort.m >= estado.m) * ifelse(lista.estados.m[[1]] == 1, 0, 1), 1, function(fila) {
+    cumsum(fila) > 0
+  }))
+```
