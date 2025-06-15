@@ -679,7 +679,6 @@ salarios.m <- matriz.salarios[which(cotizantes$sexo == 2), ]
 En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
 
 ```{r estocastica_base}
-ini <- Sys.time()
 ### Beneficios de los cotizantes sin contar estado ###
 
 # Vamos a crear las dos matrices aleatorias usando distribución uniforme.
@@ -948,8 +947,6 @@ beneficio.invalidez.m <-
          ) * (
            rowSums(salarios.top.m[filas.inv.m, ][which(requisito.cuotas.m == 1), ])
          )), 0))
-fin <- Sys.time()
-print(fin - ini)
 ```
 
 # Resultados base
