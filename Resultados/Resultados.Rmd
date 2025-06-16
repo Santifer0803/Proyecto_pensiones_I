@@ -677,7 +677,7 @@ salarios.m <- matriz.salarios[which(cotizantes$sexo == 2), ]
 ### Probabilidades de muerte pensionados actuales
 
 Se crea la matriz de edades de pensionados replicando la logica del chunk "deterministica_base"
-```{r}
+```{r edades_pensionados}
 
 pensionados$anio_nac <- year(pensionados$fec_nac) #extraer el anno de nacimiento
 
@@ -687,7 +687,6 @@ edades.pensionados <- matrix(
   ncol = 95,
   byrow = FALSE
 )
-
 colnames(edades.pensionados) <- as.character(2025:2119)
 
 
@@ -697,6 +696,48 @@ for (j in 2:ncol(edades.pensionados)) {
 
 edades.pensionados <- ifelse(edades.pensionados > 115, 115, edades.pensionados)
 
+#se annaden columnas de relevancia
+edades.pensionados.df <- as.data.frame(edades.pensionados)
+rm(edades.pensionados)
+
+sex.cod <- ifelse(pensionados$sexo == "M", 1, 2) # para que coincida con la codificacion de la matriz de mortalidad
+
+edades.pensionados.df <- cbind(sexo = sex.cod, edades.pensionados.df)
+
+edades.pensionados.df <- cbind(id = pensionados$id_pensionado, edades.pensionados.df)
+
+```
+
+A continuacion el df de las probabilidades de mortalidad especificas para cada pensionado que esta actualmente. la idea es llenar la matriz vinculando el sexo, edad, y anno especifico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
+```{r}
+# se crea la matriz
+matriz.qx.pensionados <- matrix(0, nrow = nrow(pensionados), ncol = 95)
+colnames(matriz.qx.pensionados) <- as.character(2025:2119)
+
+qx.pensionados.df <- as.data.frame(matriz.qx.pensionados)
+rm(matriz.qx.pensionados)
+
+# se anade el sexo y el id
+qx.pensionados.df <- cbind(sexo = sex.cod, qx.pensionados.df)
+
+qx.pensionados.df <- cbind(id = pensionados$id_pensionado, qx.pensionados.df)
+
+#se llena el df 
+
+for(i in 1:nrow(qx.pensionados.df)){ #itera sobre las filas (recorre cada pensionado especifico)
+  
+  sexo.esp <- qx.pensionados.df[i, 2] #la columna 2 es la del sexo, valor fijo para la iteracion i esima
+  
+  for (j in 3:ncol(qx.pensionados.df)) { #recorre cada columna (cada ano). empieza en 3 pq la 1 es de id y la 2 es de sexo
+    
+    anio.esp <- as.numeric(colnames(qx.pensionados.df)[j])
+    edad.esp <- edades.pensionados.df[i,j]
+    qx.pensionados.df[i,j] <- mortalidad[mortalidad$sex == sexo.esp & mortalidad$year == anio.esp & mortalidad$edad == edad.esp, "qx"]
+  }
+}
+
+
+  
 ```
 
 
