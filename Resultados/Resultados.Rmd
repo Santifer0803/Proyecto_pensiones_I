@@ -674,6 +674,32 @@ salarios.h <- matriz.salarios[which(cotizantes$sexo == 1), ]
 salarios.m <- matriz.salarios[which(cotizantes$sexo == 2), ]
 ```
 
+### Probabilidades de muerte pensionados actuales
+
+Se crea la matriz de edades de pensionados replicando la logica del chunk "deterministica_base"
+```{r}
+
+pensionados$anio_nac <- year(pensionados$fec_nac) #extraer el anno de nacimiento
+
+edades.pensionados <- matrix(
+  2025 - pensionados$anio_nac,
+  nrow = nrow(pensionados),
+  ncol = 95,
+  byrow = FALSE
+)
+
+colnames(edades.pensionados) <- as.character(2025:2119)
+
+
+for (j in 2:ncol(edades.pensionados)) {
+  edades.pensionados[, j] <- edades.pensionados[, j - 1] + 1
+}
+
+edades.pensionados <- ifelse(edades.pensionados > 115, 115, edades.pensionados)
+
+```
+
+
 ## Parte estocástica
 
 En esta sección se encuentra todo objeto que sea, o dependa, de algún elemento estocástico. Son los factores que varían en cada una de las iteraciones del modelo en alguna forma.
