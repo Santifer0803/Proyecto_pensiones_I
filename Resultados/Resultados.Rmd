@@ -1041,8 +1041,6 @@ A continuacion se crean dos vectores para hombres y mujeres donde se identifica 
 ```{r hijos}
 hijos.h <- edad.fallecido.h >= 25 & (edad.fallecido.h - 25) < 25
 hijos.m <- edad.fallecido.m >= 25 & (edad.fallecido.m - 25) < 25
-
-
 ```
 
 Ahora se calcula el beneficio por sucesion a quien corresponda
@@ -1074,14 +1072,14 @@ beneficio.conyuge.m <- beneficio.base.m * porcentaje.viudez.m
 beneficio.hijo.h <- beneficio.base.h * porcentaje.hijo.h
 beneficio.hijo.m <- beneficio.base.m * porcentaje.hijo.m
 
-## Verificar si tiene derecho al beneficio por sucesion (art. 18) 
+## verificar si tiene derecho al beneficio por sucesion (art. 18) 
 
-# Condición 1: tener al menos 180 cotizaciones totales
+# condición 1: tener al menos 180 cotizaciones totales
 requisito.180.h <- cuotas.finales.h[filas.muerte.h] >= 180
 requisito.180.m <- cuotas.finales.m[filas.muerte.m] >= 180
 
 # condición 2: haber cotizado al menos 12 veces en los últimos 24 meses antes de morir
-# Si murió antes de los 24 meses simulados, se usan los datos anteriores q estan en la base 
+# si murió antes de los 24 meses simulados, se usan los datos anteriores q estan en la base 
 
 requisito.24meses.h <- mapply(function(i, j) {
   if (j <= 2) {
@@ -1119,25 +1117,184 @@ Se procede a calcular los beneficicos para las 3 modalidades de pension (vejez, 
 
 Primero los parametros generales:
 ```{r parametros_pensiones}
-bono_cotizaciones <- 0.000833        # que excedan las 300 cotizaciones
-bono_postergacion <- 0.001333         #por mes de postergacion
-limite.postergacion <- 1.25
+bono.cotizaciones <- 0.000833        # que excedan las 300 cotizaciones
+bono.postergacion <- 0.001333         #por mes de postergacion
+tasa.maxima <- 1.25
+
+salario.minimo <- 12236.95 * 22  #tomando como supuesto 4 fines de semana al mes, y meses de 30 dias, se multiplica el salario por jornada diaria ordinaria por los dias laborales del mes
+
+# funcion que calcula la cuantia basica con base en el articulo 24
+cuantia.basica <- function(salario.referencia) {
+  cuantia <- numeric(length(salario.referencia))
+
+  cuantia[salario.referencia < 2 * salario.minimo] <- 0.525
+  cuantia[salario.referencia >= 2 * salario.minimo & salario.referencia < 3 * salario.minimo] <- 0.51
+  cuantia[salario.referencia >= 3 * salario.minimo & salario.referencia < 4 * salario.minimo] <- 0.494
+  cuantia[salario.referencia >= 4 * salario.minimo & salario.referencia < 5 * salario.minimo] <- 0.478
+  cuantia[salario.referencia >= 5 * salario.minimo & salario.referencia < 6 * salario.minimo] <- 0.462
+  cuantia[salario.referencia >= 6 * salario.minimo & salario.referencia < 8 * salario.minimo] <- 0.446
+  cuantia[salario.referencia >= 8 * salario.minimo] <- 0.43
+
+  return(cuantia)
+}
+  
+  
 ```
 
 Ahora los beneficios por vejez
-```{r}
+```{r monto.pension.vejez}
+# las filas de personas que se retiraron
+filas.vejez.h <- which(salida.h == "Retirado")
+filas.vejez.m <- which(salida.m == "Retirado")
+
+# los salario promedio base (prom. de 300 mejores salarios)
+salario.referencia.h <- beneficio.vejez.h[filas.vejez.h]
+salario.referencia.m <- beneficio.vejez.m[filas.vejez.m]
+
+# la cuantía básica según salario
+cuantia.vejez.h <- cuantia.basica(salario.referencia.h)
+cuantia.vejez.m <- cuantia.basica(salario.referencia.m)
+
+# la bonificación por cotizaciones adicionales (exceso sobre 300)
+meses.extra.h <- pmax(0, cuotas.finales.h[filas.vejez.h] - 300)
+meses.extra.m <- pmax(0, cuotas.finales.m[filas.vejez.m] - 300)
+bono.cuotas.h <- meses.extra.h * bono.cotizaciones
+bono.cuotas.m <- meses.extra.m * bono.cotizaciones
+
+# la bonificación por postergación (meses en estado "Posterga")
+meses.post.h <- rowSums(postergacion.simulada.h[filas.vejez.h, ])
+meses.post.m <- rowSums(postergacion.simulada.m[filas.vejez.m, ])
+bono.post.h <- meses.post.h * bono.postergacion
+bono.post.m <- meses.post.m * bono.postergacion
+
+# la tasa de reemplazo final
+tasa.vejez.h <- cuantia.vejez.h + bono.cuotas.h + bono.post.h
+tasa.vejez.m <- cuantia.vejez.m + bono.cuotas.m + bono.post.m
+
+# verificacion del límite por reglamentario
+tasa.vejez.h <- pmin(tasa.vejez.h, tasa.maxima)
+tasa.vejez.m <- pmin(tasa.vejez.m, tasa.maxima)
+
+# pensión final por vejez
+pension.vejez.h <- salario.referencia.h * tasa.vejez.h
+pension.vejez.m <- salario.referencia.m * tasa.vejez.m
+
 
 ```
 
 los beneficios por invalidez:
-```{r}
+```{r monto.pension.invalidez}
+
+# el salario base
+salario.referencia.inv.h <- beneficio.invalidez.h[filas.inv.h]
+salario.referencia.inv.m <- beneficio.invalidez.m[filas.inv.m]
+
+# la cuantía básica
+cuantia.invalidez.h <- cuantia.basica(salario.referencia.inv.h)
+cuantia.invalidez.m <- cuantia.basica(salario.referencia.inv.m)
+
+# la bonificación por cuotas (más de 180)
+meses.extra.inv.h <- pmax(0, cuotas.finales.h[filas.inv.h] - 180)
+meses.extra.inv.m <- pmax(0, cuotas.finales.m[filas.inv.m] - 180)
+bono.cuotas.inv.h <- meses.extra.inv.h * bono.cotizaciones
+bono.cuotas.inv.m <- meses.extra.inv.m * bono.cotizaciones
+
+# la tasa de reemplazo
+tasa.invalidez.h <- cuantia.invalidez.h + bono.cuotas.inv.h
+tasa.invalidez.m <- cuantia.invalidez.m + bono.cuotas.inv.m
+
+# verificacion del límite
+tasa.invalidez.h <- pmin(tasa.invalidez.h, tasa.maxima)
+tasa.invalidez.m <- pmin(tasa.invalidez.m, tasa.maxima)
+
+# la pensión por invalidez
+pension.invalidez.h <- salario.referencia.inv.h * tasa.invalidez.h
+pension.invalidez.m <- salario.referencia.inv.m * tasa.invalidez.m
 
 ```
 
-los beneficios por sucesion: 
+Y los beneficios por sucesión: 
 
-```{r}
+```{r monto.pension.sucesion}
+# calculado en la seccion anterior
+pension.sucesion.conyuge.h <- beneficio.conyuge.h
+pension.sucesion.conyuge.m <- beneficio.conyuge.m
+pension.sucesion.hijo.h <- beneficio.hijo.h
+pension.sucesion.hijo.m <- beneficio.hijo.m
 
+```
+
+Se obtienen los vectores con las pensiones
+```{r vectores.pensiones}
+pensiones.vejez <- c(pension.vejez.h, pension.vejez.m)
+pensiones.invalidez <- c(pension.invalidez.h, pension.invalidez.m)
+pensiones.sucesion.conyuge <- c(pension.sucesion.conyuge.h, pension.sucesion.conyuge.m)
+pensiones.sucesion.hijo <- c(pension.sucesion.hijo.h, pension.sucesion.hijo.m)
+
+```
+
+Finalmente, se compacta todo en un solo datatable
+```{r dt.informacion.pension}
+
+# ID y sexo de cotizantes
+ids.h <- cotizantes.activos$id[which(cotizantes.activos$sexo == 1)]
+ids.m <- cotizantes.activos$id[which(cotizantes.activos$sexo == 2)]
+
+# IDs filtrados por tipo de pensión
+ids.vejez.h <- ids.h[filas.vejez.h]
+ids.vejez.m <- ids.m[filas.vejez.m]
+ids.invalidez.h <- ids.h[filas.inv.h]
+ids.invalidez.m <- ids.m[filas.inv.m]
+ids.sucesion.conyuge.h <- ids.h[filas.muerte.h]
+ids.sucesion.conyuge.m <- ids.m[filas.muerte.m]
+ids.sucesion.hijo.h <- ids.sucesion.conyuge.h
+ids.sucesion.hijo.m <- ids.sucesion.conyuge.m
+
+#datos de pension por vejez
+df.vejez <- data.frame(
+  id = c(ids.vejez.h, ids.vejez.m),
+  sexo = c(rep(1, length(ids.vejez.h)), rep(2, length(ids.vejez.m))),
+  tipo = "Vejez",
+  monto = c(pension.vejez.h, pension.vejez.m)
+)
+
+#datos de pension por invalidez
+
+df.invalidez <- data.frame(
+  id = c(ids.invalidez.h, ids.invalidez.m),
+  sexo = c(rep(1, length(ids.invalidez.h)), rep(2, length(ids.invalidez.m))),
+  tipo = "Invalidez",
+  monto = c(pension.invalidez.h, pension.invalidez.m)
+)
+
+#datos de pension por sucesion al conyuge
+
+df.sucesion.conyuge <- data.frame(
+  id = c(ids.sucesion.conyuge.h, ids.sucesion.conyuge.m),
+  sexo = c(rep(1, length(ids.sucesion.conyuge.h)), rep(2, length(ids.sucesion.conyuge.m))),
+  tipo = "Sucesion - Conyuge",
+  monto = c(pension.sucesion.conyuge.h, pension.sucesion.conyuge.m)
+)
+
+#datos de pension por sucesion al hijo
+
+df.sucesion.hijo <- data.frame(
+  id = c(ids.sucesion.hijo.h, ids.sucesion.hijo.m),
+  sexo = c(rep(1, length(ids.sucesion.hijo.h)), rep(2, length(ids.sucesion.hijo.m))),
+  tipo = "Sucesion - Hijo",
+  monto = c(pension.sucesion.hijo.h, pension.sucesion.hijo.m)
+)
+
+# df final
+
+df.pensiones <- rbind(
+  df.vejez,
+  df.invalidez,
+  df.sucesion.conyuge,
+  df.sucesion.hijo
+)
+
+datos.de.pensiones <- setDT(df.pensiones)
 ```
 
 # Resultados base
