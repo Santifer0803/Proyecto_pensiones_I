@@ -709,7 +709,7 @@ edades.pensionados.df <- cbind(id = pensionados$id_pensionado, edades.pensionado
 ```
 
 A continuacion el df de las probabilidades de mortalidad especificas para cada pensionado que esta actualmente. la idea es llenar la matriz vinculando el sexo, edad, y anno especifico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
-```{r}
+```{r qx.especificos.pensionados.iniciales}
 # se crea la matriz
 matriz.qx.pensionados <- matrix(0, nrow = nrow(pensionados), ncol = 95)
 colnames(matriz.qx.pensionados) <- as.character(2025:2119)
@@ -1015,6 +1015,25 @@ beneficio.invalidez.m <-
            rowSums(salarios.top.m[filas.inv.m, ][which(requisito.cuotas.m == 1), ])
          )), 0))
 ```
+
+### Beneficios por sucesion 
+
+```{r}
+#  primero, los indices de las personas que mueren
+filas.muerte.h <- which(salida.h == "Fallecido")
+filas.muerte.m <- which(salida.m == "Fallecido")
+
+
+# se identifican las columnas en la que ocurre la muerte (el año)
+col.fallecido.h <- apply(estados.h[filas.muerte.h, ], 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
+col.fallecido.m <- apply(estados.m[filas.muerte.m, ], 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
+
+```
+
 
 # Resultados base
 
