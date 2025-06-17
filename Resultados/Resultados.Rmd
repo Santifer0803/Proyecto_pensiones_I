@@ -1113,6 +1113,32 @@ beneficio.conyuge.m <- ifelse(tiene.derecho.sucesion.m, beneficio.conyuge.m, 0)
 beneficio.hijo.m    <- ifelse(tiene.derecho.sucesion.m, beneficio.hijo.m, 0)
 ```
 
+### Pension final 
+
+Se procede a calcular los beneficicos para las 3 modalidades de pension (vejez, invalidez, sucesion)
+
+Primero los parametros generales:
+```{r parametros_pensiones}
+bono_cotizaciones <- 0.000833        # que excedan las 300 cotizaciones
+bono_postergacion <- 0.001333         #por mes de postergacion
+limite.postergacion <- 1.25
+```
+
+Ahora los beneficios por vejez
+```{r}
+
+```
+
+los beneficios por invalidez:
+```{r}
+
+```
+
+los beneficios por sucesion: 
+
+```{r}
+
+```
 
 # Resultados base
 
