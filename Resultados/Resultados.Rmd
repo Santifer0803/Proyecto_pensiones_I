@@ -1034,6 +1034,17 @@ col.fallecido.m <- apply(estados.m[filas.muerte.m, ], 1, function(fila) {
 
 ```
 
+A continuacion se crean dos vectores para hombres y mujeres donde se identifica si al momento de la muerte era mayor a 25 (TRUE) lo que implica que tiene un hijo. 
+```{r}
+hijos.h <- mapply(function(i, j) {
+  edades.h[i, j] >= 25
+}, i = filas.muerte.h, j = col.fallecido.h)
+
+hijos.m <- mapply(function(i, j) {
+  edades.m[i, j] >= 25
+}, i = filas.muerte.m, j = col.fallecido.m)
+
+```
 
 # Resultados base
 
