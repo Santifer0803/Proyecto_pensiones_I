@@ -1018,7 +1018,7 @@ beneficio.invalidez.m <-
 
 ### Beneficios por sucesion 
 
-```{r}
+```{r edad_muerte_fallecidos}
 #  primero, los indices de las personas que mueren
 filas.muerte.h <- which(salida.h == "Fallecido")
 filas.muerte.m <- which(salida.m == "Fallecido")
@@ -1032,19 +1032,87 @@ col.fallecido.m <- apply(estados.m[filas.muerte.m, ], 1, function(fila) {
   which(fila == "Fallecido")[1]
 })
 
+#Edad de la persona al morir
+edad.fallecido.h <- mapply(function(i, j) edades.h[i, j], i = filas.muerte.h, j = col.fallecido.h)
+edad.fallecido.m <- mapply(function(i, j) edades.m[i, j], i = filas.muerte.m, j = col.fallecido.m)
 ```
 
-A continuacion se crean dos vectores para hombres y mujeres donde se identifica si al momento de la muerte era mayor a 25 (TRUE) lo que implica que tiene un hijo. 
-```{r}
-hijos.h <- mapply(function(i, j) {
-  edades.h[i, j] >= 25
+A continuacion se crean dos vectores para hombres y mujeres donde se identifica si al momento de la muerte era mayor a 25 (TRUE) lo que implica que tiene un hijo, y ademas que este hijo no tenga mas de 25.  
+```{r hijos}
+hijos.h <- edad.fallecido.h >= 25 & (edad.fallecido.h - 25) < 25
+hijos.m <- edad.fallecido.m >= 25 & (edad.fallecido.m - 25) < 25
+
+
+```
+
+Ahora se calcula el beneficio por sucesion a quien corresponda
+```{r beneficio_sucesion}
+# se calcula la pensión sucesoria con base en la pensión por vejez que hubiera recibido (art. 27)
+
+salarios.sucesion.h <- salarios.top.h[filas.muerte.h, ]
+salarios.sucesion.m <- salarios.top.m[filas.muerte.m, ]
+
+beneficio.base.h <- rowSums(salarios.sucesion.h) / 300
+beneficio.base.m <- rowSums(salarios.sucesion.m) / 300
+
+# se calcula el porcentaje para pensión por viudez según edad del cónyuge
+# por art. 27: 70% si cónyuge ≥ 60, 60% si 50–59, 50% si < 50
+porcentaje.viudez.h <- ifelse(edad.fallecido.h >= 60, 0.70,
+                              ifelse(edad.fallecido.h >= 50, 0.60, 0.50))
+porcentaje.viudez.m <- ifelse(edad.fallecido.m >= 60, 0.70,
+                              ifelse(edad.fallecido.m >= 50, 0.60, 0.50))
+
+# asi como el porcentaje para pensión por orfandad (30% si el hijo califica)
+# art. 27: 30% para hijos menores de 25 años
+porcentaje.hijo.h <- ifelse(hijos.h, 0.30, 0)
+porcentaje.hijo.m <- ifelse(hijos.m, 0.30, 0)
+
+# se calcula el beneficio por sucesión (sin validar aún si tiene derecho)
+beneficio.conyuge.h <- beneficio.base.h * porcentaje.viudez.h
+beneficio.conyuge.m <- beneficio.base.m * porcentaje.viudez.m
+
+beneficio.hijo.h <- beneficio.base.h * porcentaje.hijo.h
+beneficio.hijo.m <- beneficio.base.m * porcentaje.hijo.m
+
+## Verificar si tiene derecho al beneficio por sucesion (art. 18) 
+
+# Condición 1: tener al menos 180 cotizaciones totales
+requisito.180.h <- cuotas.finales.h[filas.muerte.h] >= 180
+requisito.180.m <- cuotas.finales.m[filas.muerte.m] >= 180
+
+# condición 2: haber cotizado al menos 12 veces en los últimos 24 meses antes de morir
+# Si murió antes de los 24 meses simulados, se usan los datos anteriores q estan en la base 
+
+requisito.24meses.h <- mapply(function(i, j) {
+  if (j <= 2) {
+    cot.h <- cotizaciones.vp[which(cotizantes.activos$sexo == 1), ]
+    sum(cot.h[i, 337:360] > 10000, na.rm = TRUE) >= 12
+  } else {
+    sum(cotizaciones.h[i, (j - 2):(j - 1)], na.rm = TRUE) >= 12
+  }
 }, i = filas.muerte.h, j = col.fallecido.h)
 
-hijos.m <- mapply(function(i, j) {
-  edades.m[i, j] >= 25
+requisito.24meses.m <- mapply(function(i, j) {
+  if (j <= 2) {
+    cot.m <- cotizaciones.vp[which(cotizantes.activos$sexo == 2), ]
+    sum(cot.m[i, 337:360] > 10000, na.rm = TRUE) >= 12
+  } else {
+    sum(cotizaciones.m[i, (j - 2):(j - 1)], na.rm = TRUE) >= 12
+  }
 }, i = filas.muerte.m, j = col.fallecido.m)
 
+# debe de cumple ambas
+tiene.derecho.sucesion.h <- requisito.180.h & requisito.24meses.h
+tiene.derecho.sucesion.m <- requisito.180.m & requisito.24meses.m
+
+# se verifica si califica para el derecho o no. En caso de que no se asigna un beneficio = 0
+beneficio.conyuge.h <- ifelse(tiene.derecho.sucesion.h, beneficio.conyuge.h, 0)
+beneficio.hijo.h    <- ifelse(tiene.derecho.sucesion.h, beneficio.hijo.h, 0)
+
+beneficio.conyuge.m <- ifelse(tiene.derecho.sucesion.m, beneficio.conyuge.m, 0)
+beneficio.hijo.m    <- ifelse(tiene.derecho.sucesion.m, beneficio.hijo.m, 0)
 ```
+
 
 # Resultados base
 
