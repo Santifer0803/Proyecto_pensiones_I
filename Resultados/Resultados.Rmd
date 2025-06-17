@@ -457,7 +457,7 @@ graficar.proyeccion.id <- function(persona.id) {
   }
   
   ggplot(proyeccion, aes(x = edad, y = salario)) +
-    geom_line(color = "purple", size = 1.2) +
+    geom_line(color = "purple", linewidth = 1.2) +
     labs(
       title = paste("Curva salarial proyectada para ID:", persona.id),
       x = "Edad proyectada",
@@ -922,21 +922,66 @@ matriz.salarios.m <- t(mapply(function(salarios, largo) {
 matriz.salarios.h <- cbind(cotizantes.h, matriz.salarios.h)
 matriz.salarios.m <- cbind(cotizantes.m, matriz.salarios.m)
 
-# Obtenemos los 312 mejores salarios (pueden incluir 0), separados por sexo
+# Obtenemos los mejores salarios ordenados (pueden incluir 0), separados por sexo
 salarios.top.h <- t(apply(matriz.salarios.h, 1, function(fila) {
-  sort(fila, decreasing = TRUE)[1:312]
+  sort(fila, decreasing = TRUE)
 }))
 salarios.top.m <- t(apply(matriz.salarios.m, 1, function(fila) {
-  sort(fila, decreasing = TRUE)[1:312]
+  sort(fila, decreasing = TRUE)
 }))
 
-# Un salario será atípico si es mayor a 5 millones, la diferencia con el siguiente salario más alto es de 500k y se ubica en los 12 meses con salario más alto
-salarios.top.h[, 1:12] <-
-  salarios.top.h[, 1:12] * ifelse(((salarios.top.h[, 1:12] > 5000000) * ((salarios.top.h[, 1:12] - salarios.top.h[, 2:13]) > 500000
-  )) == 1, 0, 1)
-salarios.top.m[, 1:12] <-
-  salarios.top.m[, 1:12] * ifelse(((salarios.top.m[, 1:12] > 5000000) * ((salarios.top.m[, 1:12] - salarios.top.m[, 2:13]) > 500000
-  )) == 1, 0, 1)
+# Identificamos las diferencias entre los salarios
+diferencias.h <- t(apply(salarios.top.h, 1, function(fila){
+  abs(diff(fila))
+}))
+diferencias.m <- t(apply(salarios.top.m, 1, function(fila){
+  abs(diff(fila))
+}))
+
+# Cantidad de columnas en las diferencias
+columnas.diff <- ncol(diferencias.h) - 1
+
+# Un salario será atípico si es mayor a 5 millones y tiene menos de 12 salarios en un rango de 500 000 colones con ese monto o tiene un salario con una diferencia de más de 500 000 colones al siguiente. Iniciamos viendo las diferencias
+atipicos.h <- t(apply(diferencias.h, 1, function(fila){
+  # Valores mayores a 500 000 serán atípicos
+  v.altos <- fila > 500000
+  
+  # Se identifican las rachas de valores menores a 500 000
+  v.bajos <- rle(!(v.altos))
+  
+  # Vector para marcar atípicos
+  resultado <- rep(FALSE, columnas.diff)
+  
+  # Vector en donde se marcan atípicos si hay rachas menores a 12
+  rachas.cortas <- with(v.bajos, rep(lengths < 12 & values, lengths))
+  
+  # Se combinan ambas condiciones en un vector
+  resultado[v.altos | rachas.cortas] <- TRUE
+  return(resultado)
+}))
+atipicos.m <- t(apply(diferencias.m, 1, function(fila){
+  # Valores mayores a 500 000 serán atípicos
+  v.altos <- fila > 500000
+  
+  # Se identifican las rachas de valores menores a 500 000
+  v.bajos <- rle(!(v.altos))
+  
+  # Vector para marcar atípicos
+  resultado <- rep(FALSE, columnas.diff)
+  
+  # Vector en donde se marcan atípicos si hay rachas menores a 12
+  rachas.cortas <- with(v.bajos, rep(lengths < 12 & values, lengths))
+  
+  # Se combinan ambas condiciones en un vector
+  resultado[v.altos | rachas.cortas] <- TRUE
+  return(resultado)
+}))
+
+# Ahora consideramos los atípicos en la matriz de salarios, considerando aquellos que son de más de 5 millones
+salarios.top.h <-
+  salarios.top.h[,-ncol(salarios.top.h)] * !(atipicos.h * (salarios.top.h[,-ncol(salarios.top.h)] > 5000000))
+salarios.top.m <-
+  salarios.top.m[,-ncol(salarios.top.m)] * !(atipicos.m * (salarios.top.m[,-ncol(salarios.top.m)] > 5000000))
 
 # Se sacan los 300 mejores salarios, ahora sin los salarios atípicos
 salarios.top.h <- t(apply(salarios.top.h, 1, function(fila) {
@@ -1314,7 +1359,7 @@ Se grafica la curva salarial sin ningún método de suavizado.
 
 ```{r grafico_curva_sin_suavizar}
 ggplot(curva.general, aes(x = proyeccion.edad, y = salario.promedio)) +
-  geom_line(color = "darkgreen", size = 1.2) +
+  geom_line(color = "darkgreen", linewidth = 1.2) +
   labs(title = "Curva salarial general promedio",
        x = "Edad proyectada",
        y = "Salario promedio") +
@@ -1326,7 +1371,7 @@ Se procede con el cálculo de la curva, pero de manera suavizada.
 ```{r curva_suavizada}
 ggplot(curva.general, aes(x = proyeccion.edad, y = salario.promedio)) +
   geom_line(color = "darkgreen", alpha = 0.4) +  # línea original, más clara
-  geom_smooth(method = "loess", color = "blue", size = 1.2, se = FALSE) +
+  geom_smooth(method = "loess", color = "blue", linewidth = 1.2, se = FALSE) +
   labs(title = "Curva salarial general suavizada",
        x = "Edad proyectada",
        y = "Salario promedio") +
