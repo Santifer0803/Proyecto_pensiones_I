@@ -49,7 +49,7 @@ pensionados <- pensionados %>% clean_names() %>% select(-c("x9"))
 
 ## Probabilidades de muerte
 
-Se cargan los datos de mortalidad dinámmicos de la SUPEN.
+Se cargan los datos de mortalidad dinámicos de la SUPEN.
 
 ```{r carga_mort}
 mortalidad <- read_excel("data/mortalidad.xls")
@@ -91,23 +91,26 @@ invalidez <- setDT(invalidez)
 ```
 
 ```{r correcciones_inflacion}
-# Se filtran para tener solo los de Costa Rica
+# Se filtran para tener solo los datos de Costa Rica
 inflacion.cr <- inflacion %>%
   filter(`Data Source` %in% c("Costa Rica", "Country Name"))
 
 inflacion.cr <- inflacion.cr[, -c(2, 3, 4)]
+
 inflacion.cr[1, 1] <- "Año"
 
+inflacion.cr <- as.data.frame(t(inflacion.cr))
+
 colnames(inflacion.cr) <- as.character(inflacion.cr[1, ])
 
-inflacion.cr <- as.data.frame(t(inflacion.cr))
-colnames(inflacion.cr) <- as.character(inflacion.cr[1, ])
 inflacion.cr <- inflacion.cr[-1, ]
 
 # Se agrega el valor de 2024
-inflacion_2024 <- data.frame("Año" = 2024, "Costa Rica" = 0.84)
-colnames(inflacion_2024) <- colnames(inflacion.cr)
-inflacion.cr <- rbind(inflacion.cr, inflacion_2024)
+inflacion.2024 <- data.frame("Año" = 2024, "Costa Rica" = 0.84)
+
+colnames(inflacion.2024) <- colnames(inflacion.cr)
+
+inflacion.cr <- rbind(inflacion.cr, inflacion.2024)
 
 # Se reasignan las filas con numeración normal (1, 2, 3, ...)
 row.names(inflacion.cr) <- NULL
@@ -117,9 +120,8 @@ inflacion.cr <- inflacion.cr %>%
   mutate(across(c(1, 2), as.numeric))
 
 rm(inflacion)
-rm(inflacion_2024)
+rm(inflacion.2024)
 ```
-
 
 # Modelo básico
 
@@ -162,7 +164,7 @@ edades.m <- edades[which(cotizantes$sexo == 2), ]
 # Se determina el estado de actividad/inactividad de las personas en el 2023
 estados23 <- rowSums(cotizantes[, 340:351] > 10000) > 0
 
-# Se agrega el estado, separado por sexo. 1 es activo y 0 es inactivo
+# Se agrega el estado, separado por sexo, 1 es activo y 0 es inactivo
 actividad.h <-
   matrix(
     estados23[which(cotizantes$sexo == 1)],
@@ -170,6 +172,7 @@ actividad.h <-
     ncol = ncol(edades.h),
     byrow = FALSE
   )
+
 actividad.m <-
   matrix(
     estados23[which(cotizantes$sexo == 2)],
@@ -191,6 +194,7 @@ inv.h <-
     nrow = nrow(edades.h),
     byrow = FALSE
   )
+
 inv.m <-
   matrix(
     invalidez[match(edades.m, edad), mujeres],
@@ -199,7 +203,7 @@ inv.m <-
     byrow = FALSE
   )
 
-# Se cambia el nombre de las columnas de la matriz ded invalidez
+# Se cambia el nombre de las columnas de la matriz de invalidez
 colnames(inv.h) <- colnames(edades.h)
 colnames(inv.m) <- colnames(edades.m)
 
@@ -215,10 +219,12 @@ colnames(mort.m) <- colnames(edades.m)
 for (i in 1:ncol(mort.h)) {
   mort.h[, i] <-
     mortalidad[sex == 1 &
-                 year == as.double(colnames(mort.h)[i])][.(edad = edades.h[, i]), on = .(edad), qx]
+                 year == as.double(colnames(mort.h)[i])][.(edad = edades.h[, i]), 
+                                                         on = .(edad), qx]
   mort.m[, i] <-
     mortalidad[sex == 2 &
-                 year == as.double(colnames(mort.m)[i])][.(edad = edades.m[, i]), on = .(edad), qx]
+                 year == as.double(colnames(mort.m)[i])][.(edad = edades.m[, i]), 
+                                                         on = .(edad), qx]
 }
 
 # Se crea una lista para guardar los estados de invalidez y muerte de los cotizantes
@@ -232,42 +238,44 @@ Se crea la función que permite anualizar los salarios en otro data frame.
 
 ```{r funcion_anualizar}
 meses.to.annos <-
-  function(df, columnas_excluir, anno_inicio = 1995) {
+  function(df, columnas.excluir, anno.inicio = 1995) {
     # Se extrae el nombre de las columnas mensuales
-    columnas_mensuales <- setdiff(names(df), columnas_excluir)
+    columnas.mensuales <- setdiff(names(df), columnas.excluir)
     
-    # Se ordena los nombres mensuales cronológicamente
-    columnas_mensuales <- sort(columnas_mensuales)
+    # Se ordenan los nombres cronológicamente
+    columnas.mensuales <- sort(columnas.mensuales)
     
     # Se calcula la cantidad de años completos
-    n_meses <- length(columnas_mensuales)
-    n_annos <- floor(n_meses / 12)
+    n.meses <- length(columnas.mensuales)
+    n.annos <- floor(n.meses / 12)
     
-    nombres_annos <-
-      as.character(seq(anno_inicio, by = 1, length.out = n_annos))
+    nombres.annos <-
+      as.character(seq(anno.inicio, by = 1, length.out = n.annos))
     
-    # Se calcula los promedios anuales
-    annos <- lapply(1:n_annos, function(i) {
-      cols <- columnas_mensuales[((i - 1) * 12 + 1):(i * 12)]
+    # Se calculan los promedios anuales
+    annos <- lapply(1:n.annos, function(i) {
+      cols <- columnas.mensuales[((i - 1) * 12 + 1):(i * 12)]
       rowMeans(df[, cols], na.rm = TRUE)
     })
     
-    # Se crea DF de promedios
-    df_anual <- as.data.frame(annos)
-    names(df_anual) <- nombres_annos
+    # Se crea el DF de promedios
+    df.anual <- as.data.frame(annos)
+    names(df.anual) <- nombres.annos
     
-    # Se combina columnas fijas y promedios anuales
-    df_final <- cbind(df[, columnas_excluir], df_anual)
-    return(df_final)
+    # Se combinan las columnas fijas y los promedios anuales
+    df.final <- cbind(df[, columnas.excluir], df.anual)
+    
+    return(df.final)
   }
 
-# Se crea DF con salarios anualizados.
+# Se crea el DF con salarios anualizados.
 cotizantes.anualizado <-
   meses.to.annos(cotizantes, c("id", "fec_nac", "sexo"))
+
 rm(meses.to.annos)
 ```
 
-Se crea un nuevo data frame donde está la información con los salarios anualizados. Además, se cambia el formato de las columnas.
+Se crea un nuevo DataFrame donde está la información con los salarios anualizados. Además, se cambia el formato de las columnas.
 
 ```{r formato_fecha}
 # Se establece el tipo de variable fecha de la columna
@@ -275,7 +283,7 @@ cotizantes.anualizado$fec_nac <-
   as.Date(cotizantes.anualizado$fec_nac,
           format = "%Y/%m/%d")
 
-# Se agrega nueva variable edad al df
+# Se agrega una nueva variable edad al df
 cotizantes.anualizado$edad <-
   2024 - as.numeric(format(cotizantes.anualizado$fec_nac, "%Y"))
 
@@ -283,7 +291,7 @@ cotizantes.anualizado$edad <-
 cotizantes$fec_nac <- as.Date(cotizantes$fec_nac,
                               format = "%Y/%m/%d")
 
-# Se agrega nueva variable edad al df
+# Se agrega una nueva variable edad al df
 cotizantes$edad <-
   2024 - as.numeric(format(cotizantes$fec_nac, "%Y"))
 ```
@@ -291,21 +299,27 @@ cotizantes$edad <-
 Se calcula una nueva columna para la matriz, la cual contiene la información del factor acumulativo por cada año, esto con el objetivo de que se multiplique el factor multiplicativo por el salario del respecto año para que éste se acumule hasta el año 2024.
 
 ```{r factor_acumulado}
-# Se actualiza la tasa, para utilizar en cálculos de forma porcentual.
+# Se actualiza la tasa, para utilizar en cálculos de forma porcentual
 inflacion.cr$`Costa Rica` <- inflacion.cr$`Costa Rica` / 100
 
 inflacion.cr$factor_acumulado <-
   sapply(inflacion.cr$Año, function(anno) {
+    
     if (anno == 2024) {
+      
       return(1)
+      
     } else {
-      años_a_usar <- inflacion.cr$Año >= anno & inflacion.cr$Año <= 2024
-      return(prod(1 + inflacion.cr$`Costa Rica`[años_a_usar]))
+      
+      años.a.usar <- inflacion.cr$Año >= anno & inflacion.cr$Año <= 2024
+      
+      return(prod(1 + inflacion.cr$`Costa Rica`[años.a.usar]))
     }
+    
   })
 ```
 
-Se procede con el cálculo del Valor Presente de todos los salarios de la base, donde se toma como tasa de acumulación, la inflación observada en el respectivo año.
+Se procede con el cálculo del valor presente de todos los salarios de la base, donde se toma como tasa de acumulación la inflación observada en el respectivo año.
 
 ```{r valor_presente}
 # Se introducen los años contabilizados históricamente
@@ -317,12 +331,15 @@ cotizantes.anualizado.VP <- cotizantes.anualizado
 # Se agrega iterativamente la inflación
 for (año in columnas.años) {
   año.num <- as.numeric(año)
+  
   factor <-
     inflacion.cr$factor_acumulado[inflacion.cr$Año == año.num]
   
   if (length(factor) == 1 && !is.na(factor)) {
+    
     cotizantes.anualizado.VP[[año]] <-
       as.numeric(cotizantes.anualizado[[año]]) / factor
+    
   }
 }
 ```
@@ -330,7 +347,7 @@ for (año in columnas.años) {
 Para graficar lo anterior, se debe pasar la base de datos a formato largo para su visualización.
 
 ```{r formato_largo}
-# Convertir columnas de años (wide) a largo
+# Convertir columnas de años a largo
 cotizantes.anualizado.VP.largo <- cotizantes.anualizado.VP %>%
   pivot_longer(
     cols = all_of(columnas.años),
@@ -366,30 +383,43 @@ proyeccion.salarios <- cotizantes.anualizado.VP %>%
   select(id, edad, salario.2024 = `2024`) %>%
   rowwise() %>%
   mutate(proyeccion = list({
+    
     edad.i <- edad
     salario.i <- salario.2024
+    
     resultados <- tibble(edad = edad.i,
                          salario = salario.i)
+    
     # 95 años hacia adelante
     for (anio in 1:95) {
       edad.i <- edad.i + 1
+      
       if (edad.i < 65) {
+        
         tasa.i <- tasas.ext[as.character(edad.i - 1)]
+        
         if (is.na(tasa.i))
+          
           break
+        
         salario.i <- salario.i * tasa.i
+        
       } else {
+        
         # A partir de 65 años tasa = 1 (salario constante)
         salario.i <- salario.i
+        
       }
+      
       resultados <-
         add_row(resultados, edad = edad.i, salario = salario.i)
+      
     }
     resultados
   })) %>%
   unnest(proyeccion, names_sep = ".")
 
-# Se limpia el ambiente de las variables que fueron auxiliares.
+# Se limpia el ambiente de las variables que fueron auxiliares
 rm(tasas.ext)
 ```
 
@@ -407,7 +437,9 @@ El siguiente código tiene la finalidad de suavizar las tasas de incremento, lo 
 modelo.loess <- loess(salario.promedio ~ proyeccion.edad, data = curva.general)
 
 curva.suavizada <- curva.general %>%
-  mutate(salario.suavizado = predict(modelo.loess, newdata = data.frame(proyeccion.edad = proyeccion.edad)))
+  mutate(salario.suavizado = predict(modelo.loess, 
+                                     newdata = data.frame(proyeccion.edad = 
+                                                          proyeccion.edad)))
 
 curva.suavizada <- curva.suavizada %>%
   arrange(proyeccion.edad) %>%  
@@ -418,10 +450,11 @@ curva.suavizada <- curva.suavizada %>%
 curva.suavizada$tasa.incremento[1] <- curva.suavizada$tasa.incremento[2]
 ```
 
-Se crea la función para proyectar, en un gráfico, a un individuo en particular. Esto utilizando los datos crudos de las tasas de incremento, con la finalidad de que se observe el comportamiento de la proyección.
+Se crea la función para proyectar en un gráfico a un individuo en particular. Esto utilizando los datos crudos de las tasas de incremento, con la finalidad de que se observe el comportamiento de la proyección.
 
 ```{r funcion_proyectar_persona}
 graficar.proyeccion.id <- function(persona.id) {
+  
   datos.iniciales <- cotizantes.anualizado.VP.largo %>%
     filter(id == persona.id, año == 2024) %>%
     select(id, edad, salario.2024 = salario.ajustado) %>%
@@ -441,7 +474,9 @@ graficar.proyeccion.id <- function(persona.id) {
   edad.i <- edad.inicial
   
   for (i in 1:95) {
+    
     edad.i <- edad.i + 1
+    
     tasa.i <- curva.suavizada %>%
       filter(proyeccion.edad == edad.i) %>%
       pull(tasa.incremento)
@@ -484,10 +519,11 @@ for (col in columnas.mensuales) {
   factor <- inflacion.cr$factor_acumulado[inflacion.cr$Año == año]
   
   if (length(factor) == 1 && !is.na(factor)) {
+    
     # Dividimos la columna mensual por el factor para traer a valor presente
     cotizantes.VP[[col]] <- cotizantes[[col]] / factor
-  } else {
-  }
+    
+  } else {}
 }
 
 rm(año)
@@ -501,7 +537,8 @@ Se calcula el total de cotizaciones por persona.
 ```{r total_cotizaciones}
 cotizantes.VP <- cotizantes.VP %>%
   rowwise() %>%
-  mutate(cotizaciones = sum(c_across(`01-1995`:`12-2024`) >= 10000, na.rm = TRUE)) %>%
+  mutate(cotizaciones = sum(c_across(`01-1995`:`12-2024`) >= 10000, 
+                            na.rm = TRUE)) %>%
   ungroup()
 ```
 
@@ -512,11 +549,13 @@ meses.2023 <- paste0(sprintf("%02d", 1:12), "-2023")
 
 cotizantes.VP <- cotizantes.VP %>%
   rowwise() %>%
-  mutate(cotizaciones.2023 = sum(c_across(all_of(meses.2023)) >= 10000, na.rm = TRUE)) %>%
+  mutate(cotizaciones.2023 = sum(c_across(all_of(meses.2023)) >= 10000, 
+                                 na.rm = TRUE)) %>%
   ungroup()
 
 cotizantes.VP <- cotizantes.VP %>%
   mutate(edad = floor(interval(start = fec_nac, end = Sys.Date()) / years(1)))
+
 rm(meses.2023)
 ```
 
@@ -525,14 +564,16 @@ Ahora, se obtienen las cotizaciones promedio, separando por edad, del año 2023.
 ```{r cotizaciones_promedio_edad}
 cotizaciones.promedio.edad <- cotizantes.VP %>%
   group_by(edad) %>%
-  summarise(promedio.cotizaciones = round(mean(cotizaciones.2023, na.rm = TRUE))) %>%
+  summarise(promedio.cotizaciones = round(mean(cotizaciones.2023, 
+                                               na.rm = TRUE))) %>%
   ungroup()
 ```
 
-Se consigue el data frame con la información de las personas activas según el mes.
+Se consigue el DataFrame con la información de las personas activas según el mes.
 
 ```{r data_inactivos}
-columnas.excluir <- c("id", "fec_nac", "sexo", "edad", "cotizaciones", "cotizaciones.2023")
+columnas.excluir <- c("id", "fec_nac", "sexo", "edad", "cotizaciones", 
+                      "cotizaciones.2023")
 
 datos.variables <- cotizantes.VP[, !names(cotizantes.VP) %in% columnas.excluir]
 datos.transformados <- as.data.frame(ifelse(datos.variables > 0, 1, 0))
@@ -540,8 +581,6 @@ datos.excluidos <- cotizantes.VP[, columnas.excluir, drop = FALSE]
 
 cotizantes.VP.activos <- cbind(datos.excluidos, datos.transformados)
 ```
-
-
 
 ```{r frecuencia_inactivos}
 data.anual <- cotizantes.VP.activos %>%
@@ -579,7 +618,7 @@ df.probabilidad.postergacion.m <- ifelse(edades.m >= 63, 0.1, 0)
 
 Ahora, se construyen diversas variables auxiliares que servirán como apoyo para la parte estocástica.
 
-```{r determinsta_auxiliar}
+```{r determinista_auxiliar}
 # Se quitan las edades mayores a 66
 cotizaciones.promedio.edad <- cotizaciones.promedio.edad %>% 
   filter(edad <= 66)
@@ -603,6 +642,7 @@ matriz.cot.h <- matrix(
   nrow = nrow(edades.h),
   byrow = FALSE
 )
+
 matriz.cot.m <- matrix(
   cotizaciones.edad.dt[match(edades.m, edad), promedio.cotizaciones],
   ncol = ncol(edades.m),
@@ -610,9 +650,11 @@ matriz.cot.m <- matrix(
   byrow = FALSE
 )
 
-# Matriz de 0, del tamaño de la predicción mensualizada
-matriz.salarios.h <- matrix(0, nrow = nrow(matriz.cot.h), ncol = (ncol(matriz.cot.h) * 12))
-matriz.salarios.m <- matrix(0, nrow = nrow(matriz.cot.m), ncol = (ncol(matriz.cot.m) * 12))
+# Matriz de 0s, del tamaño de la predicción mensualizada
+matriz.salarios.h <- matrix(0, nrow = nrow(matriz.cot.h), 
+                            ncol = (ncol(matriz.cot.h) * 12))
+matriz.salarios.m <- matrix(0, nrow = nrow(matriz.cot.m), 
+                            ncol = (ncol(matriz.cot.m) * 12))
 
 # Se obtiene la inflación acumulada desde 1995
 inflacion.95 <- (inflacion.cr %>% filter(Año >= 1995))[, 3]
@@ -620,7 +662,7 @@ inflacion.95 <- (inflacion.cr %>% filter(Año >= 1995))[, 3]
 # Se repite la inflación 12 veces (1 vez por mes)
 inflacion.95 <- rep(inflacion.95, times = rep(12, length(inflacion.95)))
 
-# Cotizaciones mensuales traidas a valor presente
+# Cotizaciones mensuales traídas a valor presente
 cotizaciones.vp <-
   as.matrix(cotizantes[, (4:(ncol(cotizantes) - 1))]) * matrix(
     inflacion.95,
@@ -635,7 +677,10 @@ cotizantes.m <- cotizaciones.vp[which(cotizantes$sexo == 2), ]
 
 # DataFrame de requisitos para invalidez
 requisitos.inv <- data.table(edad = 21:115,
-                             cotizaciones_min = c(rep(12, 3), seq(12, 84, 4), seq(90, 120, 6), rep(120, 67)))
+                             cotizaciones_min = c(rep(12, 3), 
+                                                  seq(12, 84, 4), 
+                                                  seq(90, 120, 6), 
+                                                  rep(120, 67)))
 
 # Matriz de edades modificada por los requisitos de invalidez, por sexo
 requisitos.inv.h <- matrix(
@@ -644,6 +689,7 @@ requisitos.inv.h <- matrix(
   nrow = nrow(edades.h),
   byrow = FALSE
 )
+
 requisitos.inv.m <- matrix(
   requisitos.inv[match(edades.m, edad), cotizaciones_min],
   ncol = ncol(edades.m),
@@ -679,9 +725,12 @@ cotizaciones.acum.m <- matriz.cot.m
 
 # Se le suman las cotizaciones iniciales a la primer fila
 cotizaciones.acum.h[, 1] <-
-  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)] + cotizaciones.acum.h[, 1]
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)] + 
+  cotizaciones.acum.h[, 1]
+
 cotizaciones.acum.m[, 1] <-
-  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)] + cotizaciones.acum.m[, 1]
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)] + 
+  cotizaciones.acum.m[, 1]
 
 # Se acumula la suma por fila
 cotizaciones.acum.h <- t(apply(cotizaciones.acum.h, 1, cumsum))
@@ -694,11 +743,15 @@ cotizaciones.acum.m <- cotizaciones.acum.m * actividad.m
 # Se agregan las cotizaciones acumuladas para los inactivos
 cotizaciones.acum.h[which(cotizaciones.acum.h[, 1] == 0),] <-
   cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][which(cotizaciones.acum.h[, 1] == 0)]
+
 cotizaciones.acum.m[which(cotizaciones.acum.m[, 1] == 0),] <-
   cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][which(cotizaciones.acum.m[, 1] == 0)]
 
 # Se define la tasa de interés (determinista)
 interes.real <- 0.0738
+
+# Se crea el vector con las tasas de acumulación
+s <- ((1 + interes.real)^(0:(95 - 1)))
 
 # DataFrames para probabilidades de sobrevivencia acumuladas
 sobrevivencia.h <- matrix(0, nrow = nrow(edades.h), ncol = ncol(edades.h))
@@ -706,8 +759,11 @@ sobrevivencia.m <- matrix(0, nrow = nrow(edades.m), ncol = ncol(edades.m))
 
 # Se obtienen las tasas de mortalidad para todos los pensionados desde el año 2025, separados por sexo
 for (i in 1:ncol(edades.h)) {
+  
   sobrevivencia.h[, i] <- 1 - mortalidad[year == (2024 + i) & sex == 1][match(edades.h[, i], edad), qx]
+  
   sobrevivencia.m[, i] <- 1 - mortalidad[year == (2024 + i) & sex == 2][match(edades.m[, i], edad), qx]
+  
 }
 
 # Se acumulan las probabilidades por fila
@@ -715,24 +771,25 @@ sobrevivencia.h <- t(apply(sobrevivencia.h, 1, cumprod))
 sobrevivencia.m <- t(apply(sobrevivencia.m, 1, cumprod))
 
 # Se procede a construir las anualidades para cada edad en el 2025, separado por sexo
-df.anualidades <- data.frame(edad = 21:115,
-                             hombres = 1,
-                             mujeres = 1)
+df.anualidades <- data.frame(edad = 21:115, hombres = 1, mujeres = 1)
 
 # Se rellenan las anualidades menores a 115 años
 for (i in 1:(nrow(df.anualidades) - 1)) {
+  
   df.anualidades[i, 2] <-
     1 + sum(((1 + interes.real) ^ -c(1:(
       115 - df.anualidades[i, 1]
     ))) * cumprod(1 - sort(mortalidad[year == 2025 &
                                     sex == 1 &
                                     edad > (df.anualidades[i, 1] - 1) & edad < 115, qx])))
+  
   df.anualidades[i, 3] <-
     1 + sum(((1 + interes.real) ^ -c(1:(
       115 - df.anualidades[i, 1]
     ))) * cumprod(1 - sort(mortalidad[year == 2025 &
                                     sex == 2 &
                                     edad > (df.anualidades[i, 1] - 1) & edad < 115, qx])))
+  
 }
 
 # Se pasa a formato DataTable
@@ -741,7 +798,8 @@ df.anualidades <- setDT(df.anualidades)
 
 ### Probabilidades de muerte pensionados actuales
 
-Se crea la matriz de edades de pensionados replicando la logica del chunk "deterministica_base"
+Se crea la matriz de edades de pensionados replicando la lógica del chunk "deterministica_base"
+
 ```{r edades_pensionados}
 # Extraer el año de nacimiento
 pensionados$anio_nac <- year(pensionados$fec_nac)
@@ -773,14 +831,16 @@ edades.pensionados.df <- cbind(sexo = sex.cod, edades.pensionados.df)
 edades.pensionados.df <- cbind(id = pensionados$id_pensionado, edades.pensionados.df)
 ```
 
-A continuacion el df de las probabilidades de mortalidad especificas para cada pensionado que esta actualmente. la idea es llenar la matriz vinculando el sexo, edad, y anno especifico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
+A continuacion el df de las probabilidades de mortalidad específicas para cada pensionado que está actualmente. La idea es llenar la matriz vinculando el sexo, edad, y año específico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
 
 ```{r qx.especificos.pensionados.iniciales}
 # Se crea la matriz
 matriz.qx.pensionados <- matrix(0, nrow = nrow(pensionados), ncol = 95)
+
 colnames(matriz.qx.pensionados) <- as.character(2025:2119)
 
 qx.pensionados.df <- as.data.frame(matriz.qx.pensionados)
+
 rm(matriz.qx.pensionados)
 
 # Se añade el sexo y el id
@@ -788,21 +848,56 @@ qx.pensionados.df <- cbind(sexo = sex.cod, qx.pensionados.df)
 
 qx.pensionados.df <- cbind(id = pensionados$id_pensionado, qx.pensionados.df)
 
-# Se llena el df iterando sobre las filas (recorre cada pensionado especifico)
+# Se llena el df iterando sobre las filas (recorre cada pensionado específico)
 
 for(i in 1:nrow(qx.pensionados.df)){
   
-  # La columna 2 es la del sexo, valor fijo para la iteracion i esima
+  # La columna 2 es la del sexo, valor fijo para la iteración i-ésima
   sexo.esp <- qx.pensionados.df[i, 2]
   
-  # Recorre cada columna (cada ano). empieza en 3 porque la 1 es de id y la 2 es de sexo
+  # Recorre cada columna (cada año). Empieza en 3 porque la 1 es de id y la 2 es de sexo
   for (j in 3:ncol(qx.pensionados.df)) {
     
     anio.esp <- as.numeric(colnames(qx.pensionados.df)[j])
+    
     edad.esp <- edades.pensionados.df[i,j]
-    qx.pensionados.df[i,j] <- mortalidad[mortalidad$sex == sexo.esp & mortalidad$year == anio.esp & mortalidad$edad == edad.esp, "qx"]
+    
+    qx.pensionados.df[i,j] <- mortalidad[mortalidad$sex == sexo.esp & 
+                                         mortalidad$year == anio.esp & 
+                                         mortalidad$edad == edad.esp, "qx"]
   }
 }
+```
+
+Seguidamente se crea una matriz con las probabilidades de muerte para cada edad desde 0 hasta 115 y desde el 2025 hasta el 2119.
+
+```{r prob_muertes}
+edades <- 0:115
+
+edades.completas <- outer(edades, 0:94, "+")
+colnames(edades.completas) <- colnames(edades.h)
+
+mort.completa.h <- matrix(0, nrow = length(edades), ncol = ncol(edades.h))
+mort.completa.m <- matrix(0, nrow = length(edades), ncol = ncol(edades.m))
+
+colnames(mort.completa.h) <- colnames(edades.h)
+colnames(mort.completa.m) <- colnames(edades.m)
+
+for (i in 1:ncol(mort.completa.h)) {
+  mort.completa.h[, i] <-
+    mortalidad[sex == 1 &
+                 year == as.double(colnames(mort.h)[i])][.(edad = edades.completas[, i]), 
+                                                         on = .(edad), qx]
+  mort.completa.m[, i] <-
+    mortalidad[sex == 2 &
+                 year == as.double(colnames(mort.m)[i])][.(edad = edades.completas[, i]), 
+                                                         on = .(edad), qx]
+}
+
+mort.completa.h[is.na(mort.completa.h)] <- 1
+mort.completa.m[is.na(mort.completa.m)] <- 1
+
+mort.hijos <- 0.5 * (mort.completa.h + mort.completa.m)
 ```
 
 ## Parte estocástica
@@ -1214,7 +1309,7 @@ porcentaje.viudez.m <- ifelse(edad.fallecido.m >= 60,
                               0.70,
                               ifelse(edad.fallecido.m >= 50, 0.60, 0.50))
 
-# Asi como el porcentaje para pensión por orfandad (30% si el hijo califica) art. 27: 30% para hijos menores de 25 años
+# Así como el porcentaje para pensión por orfandad (30% si el hijo califica) art. 27: 30% para hijos menores de 25 años
 porcentaje.hijo.h <- ifelse(hijos.h, 0.30, 0)
 porcentaje.hijo.m <- ifelse(hijos.m, 0.30, 0)
 
@@ -1271,11 +1366,12 @@ beneficio.hijo.m    <-
   ifelse(tiene.derecho.sucesion.m, beneficio.hijo.m, 0)
 ```
 
-### Pension final 
+### Pensión final 
 
-Se procede a calcular los beneficicos para las 3 modalidades de pension (vejez, invalidez, sucesion)
+Se procede a calcular los beneficicos para las 3 modalidades de pensión (vejez, invalidez, sucesión)
 
-Primero los parametros generales:
+Primero los parámetros generales:
+
 ```{r parametros_pensiones}
 # Que excedan las 300 cotizaciones
 bono.cotizaciones <- 0.000833
@@ -1386,69 +1482,198 @@ pensiones.sucesion.conyuge <- c(pension.sucesion.conyuge.h, pension.sucesion.con
 pensiones.sucesion.hijo <- c(pension.sucesion.hijo.h, pension.sucesion.hijo.m)
 ```
 
-Finalmente, se compacta todo en un solo datatable.
+### Pensiones por vejez por año y sexo
 
-```{r dt.informacion.pension}
-# ID y sexo de cotizantes
-ids.h <- cotizantes.activos$id[which(cotizantes.activos$sexo == 1)]
-ids.m <- cotizantes.activos$id[which(cotizantes.activos$sexo == 2)]
+```{r pensiones_vejez}
+matriz.vejez.h <- estados.h[filas.vejez.h, , drop = FALSE]
+matriz.vejez.m <- estados.m[filas.vejez.m, , drop = FALSE]
 
-# IDs filtrados por tipo de pensión
-ids.vejez.h <- ids.h[filas.vejez.h]
-ids.vejez.m <- ids.m[filas.vejez.m]
-ids.invalidez.h <- ids.h[filas.inv.h]
-ids.invalidez.m <- ids.m[filas.inv.m]
-ids.sucesion.conyuge.h <- ids.h[filas.muerte.h]
-ids.sucesion.conyuge.m <- ids.m[filas.muerte.m]
-ids.sucesion.hijo.h <- ids.sucesion.conyuge.h
-ids.sucesion.hijo.m <- ids.sucesion.conyuge.m
+edades.vejez.h <- edades.h[filas.vejez.h, , drop = FALSE]
+edades.vejez.m <- edades.m[filas.vejez.m, , drop = FALSE]
 
-# Datos de pension por vejez
-df.vejez <- data.frame(
-  id = c(ids.vejez.h, ids.vejez.m),
-  sexo = c(rep(1, length(ids.vejez.h)), rep(2, length(ids.vejez.m))),
-  tipo = "Vejez",
-  monto = c(pension.vejez.h, pension.vejez.m)
-)
+indices.1h <- apply(matriz.vejez.h, 1, function(fila) {
+  which(fila == "Retirado")[1]
+})
 
-# Datos de pension por invalidez
+indices.2h <- apply(matriz.vejez.h, 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
 
-df.invalidez <- data.frame(
-  id = c(ids.invalidez.h, ids.invalidez.m),
-  sexo = c(rep(1, length(ids.invalidez.h)), rep(2, length(ids.invalidez.m))),
-  tipo = "Invalidez",
-  monto = c(pension.invalidez.h, pension.invalidez.m)
-)
+indices.1m <- apply(matriz.vejez.m, 1, function(fila) {
+  which(fila == "Retirado")[1]
+})
 
-# Datos de pension por sucesion al conyuge
+indices.2m <- apply(matriz.vejez.m, 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
 
-df.sucesion.conyuge <- data.frame(
-  id = c(ids.sucesion.conyuge.h, ids.sucesion.conyuge.m),
-  sexo = c(rep(1, length(ids.sucesion.conyuge.h)), rep(2, length(ids.sucesion.conyuge.m))),
-  tipo = "Sucesion - Conyuge",
-  monto = c(pension.sucesion.conyuge.h, pension.sucesion.conyuge.m)
-)
+matriz.vejez.h <- matrix(as.numeric(0), nrow(matriz.vejez.h), ncol(matriz.vejez.h))
+matriz.vejez.m <- matrix(as.numeric(0), nrow(matriz.vejez.m), ncol(matriz.vejez.m))
 
-# Datos de pension por sucesion al hijo
+# for hombres
+for (i in 1:nrow(matriz.vejez.h)) {
+  
+  matriz.vejez.h[i, indices.1h[i]:(indices.2h[i] - 1)] <- 1
+  
+  edad <- edades.vejez.h[i, indices.2h[i]]
+  
+  qx.conyuge <- mort.completa.m[(edad - indices.2h[i] + 2), 
+                                indices.2h[i]:ncol(mort.completa.m)]
+  
+  vect.aleatorio <- runif(length(qx.conyuge))
+  
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+  
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  matriz.vejez.h[i, indices.2h[i]:(indices.2h[i] + indice.3)] <- 0.7
+  
+}
 
-df.sucesion.hijo <- data.frame(
-  id = c(ids.sucesion.hijo.h, ids.sucesion.hijo.m),
-  sexo = c(rep(1, length(ids.sucesion.hijo.h)), rep(2, length(ids.sucesion.hijo.m))),
-  tipo = "Sucesion - Hijo",
-  monto = c(pension.sucesion.hijo.h, pension.sucesion.hijo.m)
-)
+# for mujeres
+for (i in 1:nrow(matriz.vejez.m)) {
+  
+  matriz.vejez.m[i, indices.1m[i]:(indices.2m[i] - 1)] <- 1
+  
+  edad <- edades.vejez.m[i, indices.2m[i]]
+  
+  qx.conyuge <- mort.completa.h[(edad - indices.2h[i] + 2), 
+                                indices.2m[i]:ncol(mort.completa.h)]
+  
+  vect.aleatorio <- runif(length(qx.conyuge))
+  
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+  
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  matriz.vejez.m[i, indices.2m[i]:(indices.2m[i] + indice.3)] <- 0.7
+  
+}
 
-# Df final
+matriz.vejez.h <- matriz.vejez.h * outer(pension.vejez.h, s, `*`)
+matriz.vejez.m <- matriz.vejez.m * outer(pension.vejez.m, s, `*`)
 
-df.pensiones <- rbind(
-  df.vejez,
-  df.invalidez,
-  df.sucesion.conyuge,
-  df.sucesion.hijo
-)
-
-datos.de.pensiones <- setDT(df.pensiones)
+colnames(matriz.vejez.h) <- colnames(edades.h)
+colnames(matriz.vejez.m) <- colnames(edades.m)
 ```
+
+### Pensiones por invalidez por año y sexo
+
+```{r pensiones_invalidez}
+edades.inv.h <- edades.h[filas.inv.h, , drop = FALSE]
+edades.inv.m <- edades.m[filas.inv.m, , drop = FALSE]
+
+matriz.inv.h <- estados.h[filas.inv.h, , drop = FALSE]
+matriz.inv.m <- estados.m[filas.inv.m, , drop = FALSE]
+
+indices.1h <- apply(matriz.inv.h, 1, function(fila) {
+  which(fila == "Invalido")[1]
+})
+
+indices.2h <- apply(matriz.inv.h, 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
+
+indices.1m <- apply(matriz.inv.m, 1, function(fila) {
+  which(fila == "Invalido")[1]
+})
+
+indices.2m <- apply(matriz.inv.m, 1, function(fila) {
+  which(fila == "Fallecido")[1]
+})
+
+matriz.inv.h <- matrix(as.numeric(0), nrow(matriz.inv.h), ncol(matriz.inv.h))
+matriz.inv.m <- matrix(as.numeric(0), nrow(matriz.inv.m), ncol(matriz.inv.m))
+
+# for hombres
+for (i in 1:nrow(matriz.inv.h)) {
+  
+  matriz.inv.h[i, indices.1h[i]:(indices.2h[i] - 1)] <- 1
+  
+  edad <- edades.inv.h[i, indices.2h[i]]
+  
+  qx.conyuge <- mort.completa.m[(edad - indices.2h[i] + 2), 
+                                indices.2h[i]:ncol(mort.completa.m)]
+    
+  vect.aleatorio <- runif(length(qx.conyuge))
+    
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+    
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  if (edad >= 50) {
+    
+    matriz.inv.h[i, indices.2h[i]:indice.3] <- ifelse(edad >= 60, 0.7, 0.6)
+    
+  }else{
+    
+    matriz.inv.h[i, indices.2h[i]:indice.3] <- 0.5
+    
+    qx.hijo <- mort.hijos[(edad - 25 - indices.2h[i] + 2), 
+                          indices.2h[i]:ncol(mort.hijos)]
+    
+    vect.aleatorio <- runif(length(qx.hijo))
+    
+    estados.hijo <- qx.hijo > vect.aleatorio
+    
+    indice.4 <- which(estados.hijo == TRUE)[1] - 1
+    
+    indice.4 <- min(indice.4, (49 - edad))
+    
+    matriz.inv.h[i, indices.2h[i]:indice.4] <- 
+      matriz.inv.h[i, indices.2h[i]:indice.4] + 0.3
+    
+  }
+  
+}
+
+# for mujeres
+for (i in 1:nrow(matriz.inv.m)) {
+  
+  matriz.inv.m[i, indices.1m[i]:(indices.2m[i] - 1)] <- 1
+  
+  edad <- edades.inv.m[i, indices.2m[i]]
+  
+  qx.conyuge <- mort.completa.h[(edad - indices.2m[i] + 2), 
+                                indices.2m[i]:ncol(mort.completa.h)]
+    
+  vect.aleatorio <- runif(length(qx.conyuge))
+    
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+    
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  if (edad >= 50) {
+    
+    matriz.inv.m[i, indices.2m[i]:indice.3] <- ifelse(edad >= 60, 0.7, 0.6)
+    
+  }else{
+    
+    matriz.inv.m[i, indices.2m[i]:indice.3] <- 0.5
+    
+    qx.hijo <- mort.hijos[(edad - 25 - indices.2m[i] + 2), 
+                          indices.2m[i]:ncol(mort.hijos)]
+    
+    vect.aleatorio <- runif(length(qx.hijo))
+    
+    estados.hijo <- qx.hijo > vect.aleatorio
+    
+    indice.4 <- which(estados.hijo == TRUE)[1] - 1
+    
+    indice.4 <- min(indice.4, (49 - edad))
+    
+    matriz.inv.m[i, indices.2m[i]:indice.4] <- 
+      matriz.inv.m[i, indices.2m[i]:indice.4] + 0.3
+    
+  }
+  
+}
+
+matriz.inv.h <- matriz.inv.h * outer(pension.invalidez.h, s, `*`)
+matriz.inv.m <- matriz.inv.m * outer(pension.invalidez.m, s, `*`)
+```
+
+A
 
 ```{r beneficios_devengados}
 # Para el beneficio por vejez, separado por sexo, obtenemos los años restantes para pensionarse
@@ -1552,7 +1777,7 @@ ggplot(curva.general, aes(x = proyeccion.edad, y = salario.promedio)) +
   theme_minimal()
 ```
 
-Se generaliza la forma de consultar alguna observación de la base, donde solo se recibe el ID, y la función imprime su curva salarial para su análisis. A continuación un ejemplo:
+Seguidamente se realiza un ejemplo donde se recibe el ID y la función imprime su curva salarial para su análisis.
 
 ```{r grafico_funcion_proyectar_persona}
 graficar.proyeccion.id("097434")
