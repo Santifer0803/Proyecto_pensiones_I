@@ -778,8 +778,10 @@ matriz.aleatoria.m <-
   matrix(runif(2601 * 95), nrow = 2601, ncol = 95)
 
 # Se continúa con las matrices de probabilidades de postergación
-postergacion.simulada.h <- matriz.aleatoria.h < df.probabilidad.postergacion.h
-postergacion.simulada.m <- matriz.aleatoria.m < df.probabilidad.postergacion.m
+postergacion.simulada.h <-
+  matriz.aleatoria.h < df.probabilidad.postergacion.h
+postergacion.simulada.m <-
+  matriz.aleatoria.m < df.probabilidad.postergacion.m
 
 # Se corrigen las postergaciones incorrectas
 postergacion.simulada.h <-
@@ -937,12 +939,12 @@ cuotas.finales.m <-
 
 # Vamos a obtener los salarios de cada persona, separado por sexo, de la parte estocástica
 salarios.aux.h <- lapply(1:nrow(salario.estoc.h), function(i) {
-  rep(salario.estoc.h[i, ],
-      times = cotizaciones.h[i,])
+  rep(salario.estoc.h[i,],
+      times = cotizaciones.h[i, ])
 })
 salarios.aux.m <- lapply(1:nrow(salario.estoc.m), function(i) {
-  rep(salario.estoc.m[i, ],
-      times = cotizaciones.m[i,])
+  rep(salario.estoc.m[i,],
+      times = cotizaciones.m[i, ])
 })
 
 # Luego, ponemos los salarios en la matriz de ceros
@@ -966,10 +968,10 @@ salarios.top.m <- t(apply(matriz.salarios.m, 1, function(fila) {
 }))
 
 # Identificamos las diferencias entre los salarios
-diferencias.h <- t(apply(salarios.top.h, 1, function(fila){
+diferencias.h <- t(apply(salarios.top.h, 1, function(fila) {
   abs(diff(fila))
 }))
-diferencias.m <- t(apply(salarios.top.m, 1, function(fila){
+diferencias.m <- t(apply(salarios.top.m, 1, function(fila) {
   abs(diff(fila))
 }))
 
@@ -977,7 +979,7 @@ diferencias.m <- t(apply(salarios.top.m, 1, function(fila){
 columnas.diff <- ncol(diferencias.h) - 1
 
 # Un salario será atípico si es mayor a 5 millones y tiene menos de 12 salarios en un rango de 500 000 colones con ese monto o tiene un salario con una diferencia de más de 500 000 colones al siguiente. Iniciamos viendo las diferencias
-atipicos.h <- t(apply(diferencias.h, 1, function(fila){
+atipicos.h <- t(apply(diferencias.h, 1, function(fila) {
   # Valores mayores a 500 000 serán atípicos
   v.altos <- fila > 500000
   
@@ -988,13 +990,14 @@ atipicos.h <- t(apply(diferencias.h, 1, function(fila){
   resultado <- rep(FALSE, columnas.diff)
   
   # Vector en donde se marcan atípicos si hay rachas menores a 12
-  rachas.cortas <- with(v.bajos, rep(lengths < 12 & values, lengths))
+  rachas.cortas <-
+    with(v.bajos, rep(lengths < 12 & values, lengths))
   
   # Se combinan ambas condiciones en un vector
   resultado[v.altos | rachas.cortas] <- TRUE
   return(resultado)
 }))
-atipicos.m <- t(apply(diferencias.m, 1, function(fila){
+atipicos.m <- t(apply(diferencias.m, 1, function(fila) {
   # Valores mayores a 500 000 serán atípicos
   v.altos <- fila > 500000
   
@@ -1005,7 +1008,8 @@ atipicos.m <- t(apply(diferencias.m, 1, function(fila){
   resultado <- rep(FALSE, columnas.diff)
   
   # Vector en donde se marcan atípicos si hay rachas menores a 12
-  rachas.cortas <- with(v.bajos, rep(lengths < 12 & values, lengths))
+  rachas.cortas <-
+    with(v.bajos, rep(lengths < 12 & values, lengths))
   
   # Se combinan ambas condiciones en un vector
   resultado[v.altos | rachas.cortas] <- TRUE
@@ -1014,9 +1018,9 @@ atipicos.m <- t(apply(diferencias.m, 1, function(fila){
 
 # Ahora consideramos los atípicos en la matriz de salarios, considerando aquellos que son de más de 5 millones
 salarios.top.h <-
-  salarios.top.h[,-ncol(salarios.top.h)] * !(atipicos.h * (salarios.top.h[,-ncol(salarios.top.h)] > 5000000))
+  salarios.top.h[, -ncol(salarios.top.h)] * !(atipicos.h * (salarios.top.h[, -ncol(salarios.top.h)] > 5000000))
 salarios.top.m <-
-  salarios.top.m[,-ncol(salarios.top.m)] * !(atipicos.m * (salarios.top.m[,-ncol(salarios.top.m)] > 5000000))
+  salarios.top.m[, -ncol(salarios.top.m)] * !(atipicos.m * (salarios.top.m[, -ncol(salarios.top.m)] > 5000000))
 
 # Se sacan los 300 mejores salarios, ahora sin los salarios atípicos
 salarios.top.h <- t(apply(salarios.top.h, 1, function(fila) {
@@ -1028,72 +1032,92 @@ salarios.top.m <- t(apply(salarios.top.m, 1, function(fila) {
 
 # Beneficio por vejez, separado por sexo
 beneficio.vejez.h <-
-  (pmin(300, cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][which(salida.h == "Retirado")]) / cuotas.finales.h[which(salida.h == "Retirado")]) * (rowSums(salarios.top.h[which(salida.h == "Retirado"), ]) / 300)
+  (pmin(300, cuotas.finales.h[which(salida.h == "Retirado")]) / 300) * (rowSums(salarios.top.h[which(salida.h == "Retirado"),]) / rowSums(salarios.top.h[which(salida.h == "Retirado"),] > 9999))
 # Hacer la corrección a estados M, en donde las mujeres pueden retirarse a partir de los 63 si cumplen los requisitos
 beneficio.vejez.m <-
-  (pmin(300, cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][which(salida.m == "Retirado")]) / cuotas.finales.m[which(salida.m == "Retirado")]) * (rowSums(salarios.top.m[which(salida.m == "Retirado"), ]) / 300)
+  (pmin(300, cuotas.finales.m[which(salida.m == "Retirado")]) / 300) * (rowSums(salarios.top.m[which(salida.m == "Retirado"),]) / rowSums(salarios.top.m[which(salida.m == "Retirado"),] > 9999))
 
 # Filas de invalidez
 filas.inv.h <- which(salida.h == "Invalido")
 filas.inv.m <- which(salida.m == "Invalido")
 
 # Para el beneficio por invalidez, separado por sexo, iniciamos obteniendo la casilla en donde quedaron inválidos
-casillas.h <-
-  apply(estados.h[filas.inv.h,], 1, function(fila) {
+restantes.inv.h <-
+  apply(estados.h[filas.inv.h, ], 1, function(fila) {
     which(fila == "Invalido")[1]
   })
-casillas.m <-
-  apply(estados.m[filas.inv.m,], 1, function(fila) {
+restantes.inv.m <-
+  apply(estados.m[filas.inv.m, ], 1, function(fila) {
     which(fila == "Invalido")[1]
   })
 
 # Se compara si se han tenido las cuotas necesarias
 cuotas.binario.h <- mapply(function(i, j) {
   requisitos.inv.h[i, j] <= cuotas.finales.h[i]
-}, i = filas.inv.h, j = casillas.h)
+}, i = filas.inv.h, j = restantes.inv.h)
 cuotas.binario.m <- mapply(function(i, j) {
   requisitos.inv.m[i, j] <= cuotas.finales.m[i]
-}, i = filas.inv.m, j = casillas.m)
+}, i = filas.inv.m, j = restantes.inv.m)
 
 # Ahora, se ve si han tenido 12 cuotas en los últimos 24 meses
 requisito.cuotas.h <-
   ifelse(
-    casillas.h == 1,
-    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 337:360] > 10000),
+    restantes.inv.h == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.inv.h,][, 337:360] > 10000),
     ifelse(
-      casillas.h == 2,
-      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 349:360] > 10000) + cotizaciones.h[filas.inv.h, 1],
+      restantes.inv.h == 2,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.inv.h,][, 349:360] > 10000) + cotizaciones.h[filas.inv.h, 1],
       rowSums(cotizaciones.h[filas.inv.h, 1:2])
     )
   ) > 11
 requisito.cuotas.m <-
   ifelse(
-    casillas.m == 1,
-    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 337:360] > 10000),
+    restantes.inv.m == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.inv.m,][, 337:360] > 10000),
     ifelse(
-      casillas.m == 2,
-      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 349:360] > 10000) + cotizaciones.m[filas.inv.m, 1],
+      restantes.inv.m == 2,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.inv.m,][, 349:360] > 10000) + cotizaciones.m[filas.inv.m, 1],
       rowSums(cotizaciones.m[filas.inv.m, 1:2])
     )
   ) > 11
 
+# Si una persona invalido las cuotas necesarias para su edad y cotizó en 12 de los últimos 24 meses, tiene derecho a recibir pensión
+resultado.binario.h <- cuotas.binario.h * requisito.cuotas.h
+resultado.binario.m <- cuotas.binario.m * requisito.cuotas.m
+
+# Se obtienen las edades para las cuales se invalidó la persona
+edad.final.h <- restantes.inv.h[filas.inv.h] + edades.h[filas.inv.h, 1] - 1
+edad.final.m <- restantes.inv.m[filas.inv.m] + edades.m[filas.inv.m, 1] - 1
+
 # Se obtiene el beneficio correspondiente
 beneficio.invalidez.h <-
-  ifelse(cuotas.binario.h == 1,
-         (rowSums(salarios.top.h[filas.inv.h, ][which(requisito.cuotas.h == 1), ]) / 180),
-         ifelse(requisito.cuotas.h == 1, ((
-           cuotas.finales.h[filas.inv.h][which(requisito.cuotas.h == 1)] / 180
-         ) * (
-           rowSums(salarios.top.h[filas.inv.h, ][which(requisito.cuotas.h == 1), ])
-         )), 0))
+  ifelse(
+    cuotas.finales.h[filas.inv.h] > 179,
+    (pmin(300, cuotas.finales.h[which(salida.h == "Invalido")]) / 300) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
+    ifelse(
+      resultado.binario.h == 1,
+      (pmin(180, cuotas.finales.h[which(salida.h == "Invalido")]) / 180) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
+      ifelse(
+        cuotas.finales.h[filas.inv.h] > 59,
+        (cuotas.finales.h[filas.inv.h] / requisitos.inv[match(edad.final.h, edad), cotizaciones_min]) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
+        0
+      )
+    )
+  )
 beneficio.invalidez.m <-
-  ifelse(cuotas.binario.m == 1,
-         (rowSums(salarios.top.m[filas.inv.m, ][which(requisito.cuotas.m == 1), ]) / 180),
-         ifelse(requisito.cuotas.m == 1, ((
-           cuotas.finales.m[filas.inv.m][which(requisito.cuotas.m == 1)] / 180
-         ) * (
-           rowSums(salarios.top.m[filas.inv.m, ][which(requisito.cuotas.m == 1), ])
-         )), 0))
+  ifelse(
+    cuotas.finales.m[filas.inv.m] > 179,
+    (pmin(300, cuotas.finales.m[which(salida.m == "Invalido")]) / 300) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
+    ifelse(
+      resultado.binario.m == 1,
+      (pmin(180, cuotas.finales.m[which(salida.m == "Invalido")]) / 180) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
+      ifelse(
+        cuotas.finales.m[filas.inv.m] > 59,
+        (cuotas.finales.m[filas.inv.m] / requisitos.inv[match(edad.final.m, edad), cotizaciones_min]) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
+        0
+      )
+    )
+  )
 ```
 
 ### Beneficios por sucesion 
