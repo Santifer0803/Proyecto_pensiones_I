@@ -1127,8 +1127,8 @@ resultado.binario.h <- cuotas.binario.h * requisito.cuotas.h
 resultado.binario.m <- cuotas.binario.m * requisito.cuotas.m
 
 # Se obtienen las edades para las cuales se invalidó la persona
-edad.final.h <- restantes.inv.h[filas.inv.h] + edades.h[filas.inv.h, 1] - 1
-edad.final.m <- restantes.inv.m[filas.inv.m] + edades.m[filas.inv.m, 1] - 1
+edad.final.h <- restantes.inv.h + edades.h[filas.inv.h, 1] - 1
+edad.final.m <- restantes.inv.m + edades.m[filas.inv.m, 1] - 1
 
 # Se obtiene el beneficio correspondiente
 beneficio.invalidez.h <-
@@ -1170,16 +1170,22 @@ filas.muerte.m <- which(salida.m == "Fallecido")
 
 
 # Se identifican las columnas en la que ocurre la muerte (el año)
-col.fallecido.h <- apply(estados.h[filas.muerte.h, ], 1, function(fila) {
-  which(fila == "Fallecido")[1]
-})
-col.fallecido.m <- apply(estados.m[filas.muerte.m, ], 1, function(fila) {
-  which(fila == "Fallecido")[1]
-})
+col.fallecido.h <-
+  apply(estados.h[filas.muerte.h,], 1, function(fila) {
+    which(fila == "Fallecido")[1]
+  })
+col.fallecido.m <-
+  apply(estados.m[filas.muerte.m,], 1, function(fila) {
+    which(fila == "Fallecido")[1]
+  })
 
 # Edad de la persona al morir
-edad.fallecido.h <- mapply(function(i, j) edades.h[i, j], i = filas.muerte.h, j = col.fallecido.h)
-edad.fallecido.m <- mapply(function(i, j) edades.m[i, j], i = filas.muerte.m, j = col.fallecido.m)
+edad.fallecido.h <-
+  mapply(function(i, j)
+    edades.h[i, j], i = filas.muerte.h, j = col.fallecido.h)
+edad.fallecido.m <-
+  mapply(function(i, j)
+    edades.m[i, j], i = filas.muerte.m, j = col.fallecido.m)
 ```
 
 A continuacion se crean dos vectores para hombres y mujeres donde se identifica si al momento de la muerte era mayor a 25 (TRUE) lo que implica que tiene un hijo, y ademas que este hijo no tenga mas de 25.
@@ -1194,16 +1200,18 @@ Ahora se calcula el beneficio por sucesion a quien corresponda.
 ```{r beneficio_sucesion}
 # Se calcula la pensión sucesoria con base en la pensión por vejez que hubiera recibido (art. 27)
 
-salarios.sucesion.h <- salarios.top.h[filas.muerte.h, ]
-salarios.sucesion.m <- salarios.top.m[filas.muerte.m, ]
+salarios.sucesion.h <- salarios.top.h[filas.muerte.h,]
+salarios.sucesion.m <- salarios.top.m[filas.muerte.m,]
 
-beneficio.base.h <- rowSums(salarios.sucesion.h) / 300
-beneficio.base.m <- rowSums(salarios.sucesion.m) / 300
+beneficio.base.h <- rowSums(salarios.sucesion.h) / rowSums(salarios.top.h[which(salida.h == "Fallecido"),] > 9999)
+beneficio.base.m <- rowSums(salarios.sucesion.m) / rowSums(salarios.top.m[which(salida.m == "Fallecido"),] > 9999)
 
 # Se calcula el porcentaje para pensión por viudez según edad del cónyuge por art. 27: 70% si cónyuge ≥ 60, 60% si 50–59, 50% si < 50
-porcentaje.viudez.h <- ifelse(edad.fallecido.h >= 60, 0.70,
+porcentaje.viudez.h <- ifelse(edad.fallecido.h >= 60,
+                              0.70,
                               ifelse(edad.fallecido.h >= 50, 0.60, 0.50))
-porcentaje.viudez.m <- ifelse(edad.fallecido.m >= 60, 0.70,
+porcentaje.viudez.m <- ifelse(edad.fallecido.m >= 60,
+                              0.70,
                               ifelse(edad.fallecido.m >= 50, 0.60, 0.50))
 
 # Asi como el porcentaje para pensión por orfandad (30% si el hijo califica) art. 27: 30% para hijos menores de 25 años
@@ -1217,42 +1225,50 @@ beneficio.conyuge.m <- beneficio.base.m * porcentaje.viudez.m
 beneficio.hijo.h <- beneficio.base.h * porcentaje.hijo.h
 beneficio.hijo.m <- beneficio.base.m * porcentaje.hijo.m
 
-# Se verifica si tiene derecho al beneficio por sucesion (art. 18) 
+# Se verifica si tiene derecho al beneficio por sucesion (art. 18)
 
 # Condición 1: tener al menos 180 cotizaciones totales
 requisito.180.h <- cuotas.finales.h[filas.muerte.h] >= 180
 requisito.180.m <- cuotas.finales.m[filas.muerte.m] >= 180
 
-# Condición 2: haber cotizado al menos 12 veces en los últimos 24 meses antes de morir si murió antes de los 24 meses simulados, se usan los datos anteriores q estan en la base 
+# Condición 2: haber cotizado al menos 12 veces en los últimos 24 meses antes de morir si murió antes de los 24 meses simulados, se usan los datos anteriores q estan en la base
 
-requisito.24meses.h <- mapply(function(i, j) {
-  if (j <= 2) {
-    cot.h <- cotizaciones.vp[which(cotizantes.activos$sexo == 1), ]
-    sum(cot.h[i, 337:360] > 10000, na.rm = TRUE) >= 12
-  } else {
-    sum(cotizaciones.h[i, (j - 2):(j - 1)], na.rm = TRUE) >= 12
-  }
-}, i = filas.muerte.h, j = col.fallecido.h)
+requisito.24meses.h <-
+  ifelse(
+    col.fallecido.h == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.muerte.h,][, 337:360] > 10000),
+    ifelse(
+      col.fallecido.h == 2,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.muerte.h,][, 349:360] > 10000) + cotizaciones.h[filas.muerte.h, 1],
+      rowSums(cotizaciones.h[filas.muerte.h, 1:2])
+    )
+  ) > 11
 
-requisito.24meses.m <- mapply(function(i, j) {
-  if (j <= 2) {
-    cot.m <- cotizaciones.vp[which(cotizantes.activos$sexo == 2), ]
-    sum(cot.m[i, 337:360] > 10000, na.rm = TRUE) >= 12
-  } else {
-    sum(cotizaciones.m[i, (j - 2):(j - 1)], na.rm = TRUE) >= 12
-  }
-}, i = filas.muerte.m, j = col.fallecido.m)
+requisito.24meses.m <-
+  ifelse(
+    col.fallecido.m == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.muerte.m,][, 337:360] > 10000),
+    ifelse(
+      col.fallecido.m == 2,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.muerte.m,][, 349:360] > 10000) + cotizaciones.m[filas.muerte.m, 1],
+      rowSums(cotizaciones.m[filas.muerte.m, 1:2])
+    )
+  ) > 11
 
 # Debe de cumple ambas
 tiene.derecho.sucesion.h <- requisito.180.h & requisito.24meses.h
 tiene.derecho.sucesion.m <- requisito.180.m & requisito.24meses.m
 
 # Se verifica si califica para el derecho o no. En caso de que no se asigna un beneficio = 0
-beneficio.conyuge.h <- ifelse(tiene.derecho.sucesion.h, beneficio.conyuge.h, 0)
-beneficio.hijo.h    <- ifelse(tiene.derecho.sucesion.h, beneficio.hijo.h, 0)
+beneficio.conyuge.h <-
+  ifelse(tiene.derecho.sucesion.h, beneficio.conyuge.h, 0)
+beneficio.hijo.h    <-
+  ifelse(tiene.derecho.sucesion.h, beneficio.hijo.h, 0)
 
-beneficio.conyuge.m <- ifelse(tiene.derecho.sucesion.m, beneficio.conyuge.m, 0)
-beneficio.hijo.m    <- ifelse(tiene.derecho.sucesion.m, beneficio.hijo.m, 0)
+beneficio.conyuge.m <-
+  ifelse(tiene.derecho.sucesion.m, beneficio.conyuge.m, 0)
+beneficio.hijo.m    <-
+  ifelse(tiene.derecho.sucesion.m, beneficio.hijo.m, 0)
 ```
 
 ### Pension final 
@@ -1297,8 +1313,8 @@ filas.vejez.h <- which(salida.h == "Retirado")
 filas.vejez.m <- which(salida.m == "Retirado")
 
 # Los salario promedio base (prom. de 300 mejores salarios)
-salario.referencia.h <- beneficio.vejez.h[filas.vejez.h]
-salario.referencia.m <- beneficio.vejez.m[filas.vejez.m]
+salario.referencia.h <- beneficio.vejez.h
+salario.referencia.m <- beneficio.vejez.m
 
 # La cuantía básica según salario
 cuantia.vejez.h <- cuantia.basica(salario.referencia.h)
@@ -1311,8 +1327,8 @@ bono.cuotas.h <- meses.extra.h * bono.cotizaciones
 bono.cuotas.m <- meses.extra.m * bono.cotizaciones
 
 # La bonificación por postergación (meses en estado "Posterga")
-meses.post.h <- rowSums(postergacion.simulada.h[filas.vejez.h, ])
-meses.post.m <- rowSums(postergacion.simulada.m[filas.vejez.m, ])
+meses.post.h <- 12 * rowSums(postergacion.simulada.h[filas.vejez.h, ])
+meses.post.m <- 12 * rowSums(postergacion.simulada.m[filas.vejez.m, ])
 bono.post.h <- meses.post.h * bono.postergacion
 bono.post.m <- meses.post.m * bono.postergacion
 
@@ -1320,21 +1336,17 @@ bono.post.m <- meses.post.m * bono.postergacion
 tasa.vejez.h <- cuantia.vejez.h + bono.cuotas.h + bono.post.h
 tasa.vejez.m <- cuantia.vejez.m + bono.cuotas.m + bono.post.m
 
-# Verificacion del límite por reglamentario
-tasa.vejez.h <- pmin(tasa.vejez.h, tasa.maxima)
-tasa.vejez.m <- pmin(tasa.vejez.m, tasa.maxima)
-
 # Pensión final por vejez
-pension.vejez.h <- salario.referencia.h * tasa.vejez.h
-pension.vejez.m <- salario.referencia.m * tasa.vejez.m
+pension.vejez.h <- salario.referencia.h * pmin(tasa.vejez.h, tasa.maxima)
+pension.vejez.m <- salario.referencia.m * pmin(tasa.vejez.m, tasa.maxima)
 ```
 
 Los beneficios por invalidez:
 
 ```{r monto.pension.invalidez}
 # El salario base
-salario.referencia.inv.h <- beneficio.invalidez.h[filas.inv.h]
-salario.referencia.inv.m <- beneficio.invalidez.m[filas.inv.m]
+salario.referencia.inv.h <- beneficio.invalidez.h
+salario.referencia.inv.m <- beneficio.invalidez.m
 
 # La cuantía básica
 cuantia.invalidez.h <- cuantia.basica(salario.referencia.inv.h)
@@ -1350,13 +1362,9 @@ bono.cuotas.inv.m <- meses.extra.inv.m * bono.cotizaciones
 tasa.invalidez.h <- cuantia.invalidez.h + bono.cuotas.inv.h
 tasa.invalidez.m <- cuantia.invalidez.m + bono.cuotas.inv.m
 
-# Verificacion del límite
-tasa.invalidez.h <- pmin(tasa.invalidez.h, tasa.maxima)
-tasa.invalidez.m <- pmin(tasa.invalidez.m, tasa.maxima)
-
 # La pensión por invalidez
-pension.invalidez.h <- salario.referencia.inv.h * tasa.invalidez.h
-pension.invalidez.m <- salario.referencia.inv.m * tasa.invalidez.m
+pension.invalidez.h <- salario.referencia.inv.h * pmin(tasa.invalidez.h, tasa.maxima)
+pension.invalidez.m <- salario.referencia.inv.m * pmin(tasa.invalidez.m, tasa.maxima)
 ```
 
 Y los beneficios por sucesión:
