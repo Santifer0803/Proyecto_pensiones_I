@@ -574,7 +574,7 @@ Se obtienen las probabilidades deterministas de postergación, para ambos sexos.
 
 ```{r probabilidad_postergacion_hombres}
 df.probabilidad.postergacion.h <- ifelse(edades.h >= 65, 0.1, 0)
-df.probabilidad.postergacion.m <- ifelse(edades.m >= 65, 0.1, 0)
+df.probabilidad.postergacion.m <- ifelse(edades.m >= 63, 0.1, 0)
 ```
 
 Ahora, se construyen diversas variables auxiliares que servirán como apoyo para la parte estocástica.
@@ -836,15 +836,19 @@ estados.h <-
          ifelse(
            lista.estados.h[[1]] == 1,
            "Invalido",
-           ifelse(
-             postergacion.simulada.h == 1,
-             "Posterga",
-             ifelse(
-               edades.h > 64,
-               "Retirado",
-               ifelse(actividad.h == 1, "Activo", "Inactivo")
-             )
-           )
+           ifelse(((postergacion.simulada.h == 1) * (cotizaciones.acum.h > 179) * (edades.h > 64)
+           ) == 1,
+           "Posterga",
+           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 64)
+           ) == 0) * (actividad.h == 1)) == 1,
+           "Activo",
+           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 64)
+           ) == 0) * (actividad.h == 0)) == 1, "Inactivo", ifelse(
+             edades.h > 64,
+             "Retirado",
+             ifelse(actividad.h == 1, "Activo", "Inactivo")
+           ))
+           ))
          ))
 estados.m <-
   ifelse(lista.estados.m[[2]] == 1,
@@ -852,15 +856,25 @@ estados.m <-
          ifelse(
            lista.estados.m[[1]] == 1,
            "Invalido",
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 404) * (edades.m == 63)
+           ) == 1,
+           "Posterga",
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 356) * (edades.m == 64)
+           ) == 1,
+           "Posterga",
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 179) * (edades.m > 64)
+           ) == 1,
+           "Posterga",
            ifelse(
-             postergacion.simulada.m == 1,
-             "Posterga",
-             ifelse(
-               edades.m > 64,
-               "Retirado",
-               ifelse(actividad.m == 1, "Activo", "Inactivo")
-             )
-           )
+             ((edades.m == 63) * (cotizaciones.acum.m > 404)) == 1,
+             "Retirado",
+             ifelse(((edades.m == 64) * (cotizaciones.acum.m > 356)
+             ) == 1, "Retirado", ifelse(((edades.m > 64) * (cotizaciones.acum.m > 179)) == 1,
+                                        "Retirado",
+                                        ifelse(actividad.m == 1, "Activo", "Inactivo")
+             ))
+           ))
+           ))
          ))
 
 # Existe el caso en donde una persona retirada puede quedar inválida posteriormente, por lo que se corrije dicho escenario
@@ -883,16 +897,14 @@ estados.m <- t(apply(estados.m, 1, function(fila) {
 estados.h <- t(apply(estados.h, 1, function(fila) {
   if ((all(c("Posterga", "Retirado") %in% fila)) &&
       (which(fila == "Retirado")[1] < which(fila == "Posterga")[1])) {
-    fila[fila %in% c("Posterga", "Retirado")] <-
-      fila[which(fila %in% c("Posterga", "Retirado"))[1]]
+    fila[fila %in% c("Posterga", "Retirado")] <- "Retirado"
   }
   fila
 }))
 estados.m <- t(apply(estados.m, 1, function(fila) {
   if ((all(c("Posterga", "Retirado") %in% fila)) &&
       (which(fila == "Retirado")[1] < which(fila == "Posterga")[1])) {
-    fila[fila %in% c("Posterga", "Retirado")] <-
-      fila[which(fila %in% c("Posterga", "Retirado"))[1]]
+    fila[fila %in% c("Posterga", "Retirado")] <- "Retirado"
   }
   fila
 }))
