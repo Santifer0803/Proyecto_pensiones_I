@@ -672,14 +672,38 @@ matriz.salarios <-
 # Se filtra por sexo
 salarios.h <- matriz.salarios[which(cotizantes$sexo == 1), ]
 salarios.m <- matriz.salarios[which(cotizantes$sexo == 2), ]
+
+# Ahora, se hará una matriz con las cotizaciones acumuladas de cada persona
+cotizaciones.acum.h <- matriz.cot.h
+cotizaciones.acum.m <- matriz.cot.m
+
+# Se le suman las cotizaciones iniciales a la primer fila
+cotizaciones.acum.h[, 1] <-
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)] + cotizaciones.acum.h[, 1]
+cotizaciones.acum.m[, 1] <-
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)] + cotizaciones.acum.m[, 1]
+
+# Se acumula la suma por fila
+cotizaciones.acum.h <- t(apply(cotizaciones.acum.h, 1, cumsum))
+cotizaciones.acum.m <- t(apply(cotizaciones.acum.m, 1, cumsum))
+
+# Se corrige según si el trabajador está activo o inactivo
+cotizaciones.acum.h <- cotizaciones.acum.h * actividad.h
+cotizaciones.acum.m <- cotizaciones.acum.m * actividad.m
+
+# Se agregan las cotizaciones acumuladas para los inactivos
+cotizaciones.acum.h[which(cotizaciones.acum.h[, 1] == 0),] <-
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][which(cotizaciones.acum.h[, 1] == 0)]
+cotizaciones.acum.m[which(cotizaciones.acum.m[, 1] == 0),] <-
+  cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][which(cotizaciones.acum.m[, 1] == 0)]
 ```
 
 ### Probabilidades de muerte pensionados actuales
 
 Se crea la matriz de edades de pensionados replicando la logica del chunk "deterministica_base"
 ```{r edades_pensionados}
-
-pensionados$anio_nac <- year(pensionados$fec_nac) #extraer el anno de nacimiento
+# Extraer el año de nacimiento
+pensionados$anio_nac <- year(pensionados$fec_nac)
 
 edades.pensionados <- matrix(
   2025 - pensionados$anio_nac,
@@ -696,11 +720,12 @@ for (j in 2:ncol(edades.pensionados)) {
 
 edades.pensionados <- ifelse(edades.pensionados > 115, 115, edades.pensionados)
 
-#se annaden columnas de relevancia
+# Se añaden columnas de relevancia
 edades.pensionados.df <- as.data.frame(edades.pensionados)
 rm(edades.pensionados)
 
-sex.cod <- ifelse(pensionados$sexo == "M", 1, 2) # para que coincida con la codificacion de la matriz de mortalidad
+# Para que coincida con la codificacion de la matriz de mortalidad
+sex.cod <- ifelse(pensionados$sexo == "M", 1, 2)
 
 edades.pensionados.df <- cbind(sexo = sex.cod, edades.pensionados.df)
 
@@ -710,25 +735,27 @@ edades.pensionados.df <- cbind(id = pensionados$id_pensionado, edades.pensionado
 
 A continuacion el df de las probabilidades de mortalidad especificas para cada pensionado que esta actualmente. la idea es llenar la matriz vinculando el sexo, edad, y anno especifico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
 ```{r qx.especificos.pensionados.iniciales}
-# se crea la matriz
+# Se crea la matriz
 matriz.qx.pensionados <- matrix(0, nrow = nrow(pensionados), ncol = 95)
 colnames(matriz.qx.pensionados) <- as.character(2025:2119)
 
 qx.pensionados.df <- as.data.frame(matriz.qx.pensionados)
 rm(matriz.qx.pensionados)
 
-# se anade el sexo y el id
+# Se añade el sexo y el id
 qx.pensionados.df <- cbind(sexo = sex.cod, qx.pensionados.df)
 
 qx.pensionados.df <- cbind(id = pensionados$id_pensionado, qx.pensionados.df)
 
-#se llena el df 
+# Se llena el df iterando sobre las filas (recorre cada pensionado especifico)
 
-for(i in 1:nrow(qx.pensionados.df)){ #itera sobre las filas (recorre cada pensionado especifico)
+for(i in 1:nrow(qx.pensionados.df)){
   
-  sexo.esp <- qx.pensionados.df[i, 2] #la columna 2 es la del sexo, valor fijo para la iteracion i esima
+  # La columna 2 es la del sexo, valor fijo para la iteracion i esima
+  sexo.esp <- qx.pensionados.df[i, 2]
   
-  for (j in 3:ncol(qx.pensionados.df)) { #recorre cada columna (cada ano). empieza en 3 pq la 1 es de id y la 2 es de sexo
+  # Recorre cada columna (cada ano). empieza en 3 porque la 1 es de id y la 2 es de sexo
+  for (j in 3:ncol(qx.pensionados.df)) {
     
     anio.esp <- as.numeric(colnames(qx.pensionados.df)[j])
     edad.esp <- edades.pensionados.df[i,j]
