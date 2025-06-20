@@ -888,7 +888,7 @@ pension.vejinv.h <- pensionados.h[pensionados.h$cod_tipo_pension %in% c("Invalid
 annos <- year(pension.vejinv.h$rige_de_la_pension) - 1959
 
 # Edad de cada pensionado
-edad.vejinv.h <- 2024 - year(pension.vejinv.h$fec_nac)
+edad.vejinv.h <- 2025 - year(pension.vejinv.h$fec_nac)
 
 # Acumulamos el monto de pensión por la inflación correspondiente
 pension.vejinv.h <- pension.vejinv.h$monto * inflacion.cr$factor_acumulado[annos]
@@ -897,7 +897,7 @@ pension.vejinv.h <- matrix(pension.vejinv.h, length(pension.vejinv.h), ncol(edad
 # Se repite el proceso para las mujeres
 pension.vejinv.m <- pensionados.m[pensionados.m$cod_tipo_pension %in% c("Invalidez", "Vejez"), ]
 annos <- year(pension.vejinv.m$rige_de_la_pension) - 1959
-edad.vejinv.m <- 2024 - year(pension.vejinv.m$fec_nac)
+edad.vejinv.m <- 2025 - year(pension.vejinv.m$fec_nac)
 pension.vejinv.m <- pension.vejinv.m$monto * inflacion.cr$factor_acumulado[annos]
 pension.vejinv.m <- matrix(pension.vejinv.m, length(pension.vejinv.m), ncol(edades))
 
@@ -907,7 +907,7 @@ pension.suc.ch <- pension.suc.ch[pension.suc.ch$cod_parentesco == "C", ]
 
 # Repetimos el proceso anterior
 annos <- year(pension.suc.ch$rige_de_la_pension) - 1959
-edad.suc.ch <- 2024 - year(pension.suc.ch$fec_nac)
+edad.suc.ch <- 2025 - year(pension.suc.ch$fec_nac)
 pension.suc.ch <- pension.suc.ch$monto * inflacion.cr$factor_acumulado[annos]
 pension.suc.ch <- matrix(pension.suc.ch, length(pension.suc.ch), ncol(edades))
 
@@ -917,7 +917,7 @@ pension.suc.hh <- pension.suc.hh[pension.suc.hh$cod_parentesco == "H", ]
 
 # Repetimos el proceso anterior
 annos <- year(pension.suc.hh$rige_de_la_pension) - 1959
-edad.suc.hh <- 2024 - year(pension.suc.hh$fec_nac)
+edad.suc.hh <- 2025 - year(pension.suc.hh$fec_nac)
 pension.suc.hh <- pension.suc.hh$monto * inflacion.cr$factor_acumulado[annos]
 pension.suc.hh <- matrix(pension.suc.hh, length(pension.suc.hh), ncol(edades))
 
@@ -926,7 +926,7 @@ pension.suc.cm <- pensionados.m[pensionados.m$cod_tipo_pension == "Sucesión", ]
 pension.suc.cm <- pension.suc.cm[pension.suc.cm$cod_parentesco == "C", ]
 
 annos <- year(pension.suc.cm$rige_de_la_pension) - 1959
-edad.suc.cm <- 2024 - year(pension.suc.cm$fec_nac)
+edad.suc.cm <- 2025 - year(pension.suc.cm$fec_nac)
 pension.suc.cm <- pension.suc.cm$monto * inflacion.cr$factor_acumulado[annos]
 pension.suc.cm <- matrix(pension.suc.cm, length(pension.suc.cm), ncol(edades))
 
@@ -934,7 +934,7 @@ pension.suc.hm <- pensionados.m[pensionados.m$cod_tipo_pension == "Sucesión", ]
 pension.suc.hm <- pension.suc.hm[pension.suc.hm$cod_parentesco == "H", ]
 
 annos <- year(pension.suc.hm$rige_de_la_pension) - 1959
-edad.suc.hm <- 2024 - year(pension.suc.hm$fec_nac)
+edad.suc.hm <- 2025 - year(pension.suc.hm$fec_nac)
 pension.suc.hm <- pension.suc.hm$monto * inflacion.cr$factor_acumulado[annos]
 pension.suc.hm <- matrix(pension.suc.hm, length(pension.suc.hm), ncol(edades))
 
@@ -1483,6 +1483,8 @@ pension.invalidez.m <- salario.referencia.inv.m * pmin(tasa.invalidez.m, tasa.ma
 pension.sucesion.h <- beneficio.conyuge.h + beneficio.hijo.h
 pension.sucesion.m <- beneficio.conyuge.m + beneficio.hijo.m
 
+### Pensiones por vejez
+
 # Filtramos la matriz de estados a partir de las personas con beneficio por vejez
 matriz.vejez.h <- estados.h[filas.vejez.h, ]
 matriz.vejez.m <- estados.m[filas.vejez.m, ]
@@ -1509,8 +1511,6 @@ indices.2m <- apply(matriz.vejez.m, 1, function(fila) {
   which(fila == "Fallecido")[1]
 })
 
-### Pensiones por vejez
-
 # Inicializamos las matrices de beneficio con ceros
 matriz.vejez.h <- matrix(as.numeric(0), nrow(matriz.vejez.h), ncol(matriz.vejez.h))
 matriz.vejez.m <- matrix(as.numeric(0), nrow(matriz.vejez.m), ncol(matriz.vejez.m))
@@ -1533,7 +1533,7 @@ for (i in 1:nrow(matriz.vejez.h)) {
 
   # Se simula la vida del cónyuge comparando las probabilidades con números aleatorios
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio  # TRUE si muere
+  estados.conyuge <- qx.conyuge >= vect.aleatorio  # TRUE si muere
 
   # Se determina cuántos años sobrevive el cónyuge
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
@@ -1555,7 +1555,7 @@ for (i in 1:nrow(matriz.vejez.m)) {
   qx.conyuge <- mort.completa.h[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
   
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
   
@@ -1624,7 +1624,7 @@ for (i in 1:nrow(matriz.inv.h)) {
   
   # Simulamos la vida del cónyuge con aleatoriedad
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1  # Tiempo que sobrevive el cónyuge
 
   # Asignamos el porcentaje de pensión según la edad
@@ -1668,7 +1668,7 @@ for (i in 1:nrow(matriz.inv.h)) {
     
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
     
-    estados.hijo <- qx.hijo > vect.aleatorio
+    estados.hijo <- qx.hijo >= vect.aleatorio
     
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
     
@@ -1710,7 +1710,7 @@ for (i in 1:nrow(matriz.inv.m)) {
   # Mortalidad del cónyuge hombre
   qx.conyuge <- mort.completa.h[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
 
   if(edad >= 60){
@@ -1753,7 +1753,7 @@ for (i in 1:nrow(matriz.inv.m)) {
     
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
     
-    estados.hijo <- qx.hijo > vect.aleatorio
+    estados.hijo <- qx.hijo >= vect.aleatorio
     
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
     
@@ -1826,7 +1826,7 @@ for(i in 1:nrow(matriz.suc.h)){
 
   # Se simulan eventos aleatorios de fallecimiento del cónyuge
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
 
   # Se identifica cuántos años sobrevive el cónyuge
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
@@ -1868,15 +1868,10 @@ for(i in 1:nrow(matriz.suc.h)){
 
     # Simulamos la mortalidad del hijo
     n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - col + 1)
-    
     qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), col:(col + n - 1))]
-    
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
-    
-    estados.hijo <- qx.hijo > vect.aleatorio
-    
+    estados.hijo <- qx.hijo >= vect.aleatorio
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
-    
     indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
 
     matriz.suc.h[i, col:(col + indice.4)] <- 
@@ -1914,7 +1909,7 @@ for(i in 1:nrow(matriz.suc.m)){
   # Mortalidad del cónyuge hombre
   qx.conyuge <- mort.completa.h[cbind((edad + 1):(edad + n), col:(col + n - 1))]
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
 
   if(edad >= 60){
@@ -1953,15 +1948,10 @@ for(i in 1:nrow(matriz.suc.m)){
   
     # Mortalidad del hijo
     n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - col + 1)
-    
     qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), col:(col + n - 1))]
-    
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
-    
-    estados.hijo <- qx.hijo > vect.aleatorio
-    
+    estados.hijo <- qx.hijo >= vect.aleatorio
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
-    
     indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
 
     matriz.suc.m[i, col:(col + indice.4)] <- 
@@ -2026,7 +2016,7 @@ for (i in 1:nrow(matriz.vejinv.h)) {
   qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.h[edad + k, 1 + k])
   vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-  estados.pensionado <- qx.pensionado > vect.aleatorio
+  estados.pensionado <- qx.pensionado >= vect.aleatorio
   indice <- which(estados.pensionado == TRUE)[1]
   edad <- edad.vejinv.h[i] + indice
   
@@ -2035,7 +2025,7 @@ for (i in 1:nrow(matriz.vejinv.h)) {
   n <- min(nrow(mort.completa.m) - edad, ncol(mort.completa.m) - indice + 1)
   qx.conyuge <- mort.completa.m[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
   
   # Asignamos el porcentaje de pensión por viudez según la edad
@@ -2076,7 +2066,7 @@ for (i in 1:nrow(matriz.vejinv.h)) {
     n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - indice + 1)
     qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), indice:(indice + n - 1))]
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
-    estados.hijo <- qx.hijo > vect.aleatorio
+    estados.hijo <- qx.hijo >= vect.aleatorio
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
     indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
 
@@ -2112,7 +2102,7 @@ for (i in 1:nrow(matriz.vejinv.m)) {
   qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.m[edad + k, 1 + k])
   vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-  estados.pensionado <- qx.pensionado > vect.aleatorio
+  estados.pensionado <- qx.pensionado >= vect.aleatorio
   indice <- which(estados.pensionado == TRUE)[1]
   edad <- edad + indice
   
@@ -2121,7 +2111,7 @@ for (i in 1:nrow(matriz.vejinv.m)) {
   n <- min(nrow(mort.completa.h) - edad, ncol(mort.completa.h) - indice + 1)
   qx.conyuge <- mort.completa.h[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
   vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
-  estados.conyuge <- qx.conyuge > vect.aleatorio
+  estados.conyuge <- qx.conyuge >= vect.aleatorio
   indice.3 <- which(estados.conyuge == TRUE)[1] - 1
   
   # Asignamos el porcentaje de pensión por viudez según la edad
@@ -2162,7 +2152,7 @@ for (i in 1:nrow(matriz.vejinv.m)) {
     n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - indice + 1)
     qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), indice:(indice + n - 1))]
     vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
-    estados.hijo <- qx.hijo > vect.aleatorio
+    estados.hijo <- qx.hijo >= vect.aleatorio
     indice.4 <- which(estados.hijo == TRUE)[1] - 1
     indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
 
@@ -2212,7 +2202,7 @@ for (i in 1:nrow(matriz.suc.ch)) {
   qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.h[edad + k, 1 + k])
   vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-  estados.pensionado <- qx.pensionado > vect.aleatorio
+  estados.pensionado <- qx.pensionado >= vect.aleatorio
   indice <- which(estados.pensionado == TRUE)[1] - 1
   
   matriz.suc.ch[i, 1:indice] <- 1
@@ -2253,7 +2243,7 @@ for (i in 1:nrow(matriz.suc.cm)) {
   qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.m[edad + k, 1 + k])
   vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-  estados.pensionado <- qx.pensionado > vect.aleatorio
+  estados.pensionado <- qx.pensionado >= vect.aleatorio
   indice <- which(estados.pensionado == TRUE)[1] - 1
   
   matriz.suc.cm[i, 1:indice] <- 1
@@ -2311,7 +2301,7 @@ for (i in 1:nrow(matriz.suc.hh)) {
     qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.h[edad + k, 1 + k])
     vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-    estados.pensionado <- qx.pensionado > vect.aleatorio
+    estados.pensionado <- qx.pensionado >= vect.aleatorio
     indice <- which(estados.pensionado == TRUE)[1] - 1
     indice <- min(indice, (25 - edad), na.rm = TRUE)
     
@@ -2332,7 +2322,7 @@ for (i in 1:nrow(matriz.suc.hm)) {
     qx.pensionado <- sapply(0:(n - 1), 
                           function(k) mort.completa.m[edad + k, 1 + k])
     vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
-    estados.pensionado <- qx.pensionado > vect.aleatorio
+    estados.pensionado <- qx.pensionado >= vect.aleatorio
     indice <- which(estados.pensionado == TRUE)[1] - 1
     indice <- min(indice, (25 - edad), na.rm = TRUE)
     
