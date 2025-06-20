@@ -969,7 +969,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes >= 0.1)){
+while(abs(prom.despues - prom.antes) >= 0.1){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
