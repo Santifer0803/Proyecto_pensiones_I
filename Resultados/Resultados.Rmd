@@ -969,7 +969,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-#while(abs(prom.despues - prom.antes >= 0.001)){
+while(abs(prom.despues - prom.antes >= 0.1)){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2190,7 +2190,7 @@ ben.dev.suc.h <-
 ben.dev.suc.m <-
   (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.muerte.m] / cuotas.finales.m[filas.muerte.m]) * (pension.sucesion.m) * tpx.sucesion.m * anualidades.sucesion.m * ((1 + interes.real) ^ -col.fallecido.m)
   
-#}
+}
 end.time <- Sys.time()
 
 end.time - start.time
