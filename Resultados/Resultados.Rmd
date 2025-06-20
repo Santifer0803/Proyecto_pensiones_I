@@ -969,7 +969,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.1){
+while(abs(prom.despues - prom.antes) >= 0.01){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2226,7 +2226,7 @@ for(i in 1:ncol(salarios.finales)){
   
   cotizaciones <- ms * 0.15
   
-  costo.pens <- sum(Reduce("+", lapply(matrices.pension, function(mat) mat[, i])))
+  costo.pens <- sum(Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, i]))))
   
   sem <- costo.pens * (12/13) * 0.085
   
