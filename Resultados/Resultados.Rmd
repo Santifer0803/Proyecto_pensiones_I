@@ -807,79 +807,6 @@ for (i in 1:(nrow(df.anualidades) - 1)) {
 df.anualidades <- setDT(df.anualidades)
 ```
 
-### Probabilidades de muerte pensionados actuales
-
-Se crea la matriz de edades de pensionados replicando la lógica del chunk "deterministica_base"
-
-```{r edades_pensionados}
-# Extraer el año de nacimiento
-pensionados$anio_nac <- year(pensionados$fec_nac)
-
-edades.pensionados <- matrix(
-  2025 - pensionados$anio_nac,
-  nrow = nrow(pensionados),
-  ncol = ncol(edades),
-  byrow = FALSE
-)
-colnames(edades.pensionados) <- as.character(2025:2119)
-
-
-for (j in 2:ncol(edades.pensionados)) {
-  edades.pensionados[, j] <- edades.pensionados[, j - 1] + 1
-}
-
-edades.pensionados <- ifelse(edades.pensionados > 115, 115, edades.pensionados)
-
-# Se añaden columnas de relevancia
-edades.pensionados.df <- as.data.frame(edades.pensionados)
-rm(edades.pensionados)
-
-# Para que coincida con la codificacion de la matriz de mortalidad
-sex.cod <- ifelse(pensionados$sexo == "M", 1, 2)
-
-edades.pensionados.df <- cbind(sexo = sex.cod, edades.pensionados.df)
-
-edades.pensionados.df <- cbind(id = pensionados$id_pensionado, edades.pensionados.df)
-```
-
-A continuacion el df de las probabilidades de mortalidad específicas para cada pensionado que está actualmente. La idea es llenar la matriz vinculando el sexo, edad, y año específico de cada casilla con la mortalidad asociada en la matriz de probabilidades de muerte.
-
-```{r qx.especificos.pensionados.iniciales}
-# Se crea la matriz
-matriz.qx.pensionados <- matrix(0, nrow(pensionados), ncol(edades))
-
-colnames(matriz.qx.pensionados) <- as.character(2025:2119)
-
-qx.pensionados.df <- as.data.frame(matriz.qx.pensionados)
-
-rm(matriz.qx.pensionados)
-
-# Se añade el sexo y el id
-qx.pensionados.df <- cbind(sexo = sex.cod, qx.pensionados.df)
-
-qx.pensionados.df <- cbind(id = pensionados$id_pensionado, qx.pensionados.df)
-
-# Se llena el df iterando sobre las filas (recorre cada pensionado específico)
-
-for(i in 1:nrow(qx.pensionados.df)){
-  
-  # La columna 2 es la del sexo, valor fijo para la iteración i-ésima
-  sexo.esp <- qx.pensionados.df[i, 2]
-  
-  # Recorre cada columna (cada año). Empieza en 3 porque la 1 es de id y la 2 es de sexo
-  for (j in 3:ncol(qx.pensionados.df)) {
-    
-    anio.esp <- as.numeric(colnames(qx.pensionados.df)[j])
-    
-    edad.esp <- edades.pensionados.df[i,j]
-    
-    qx.pensionados.df[i,j] <- mortalidad[mortalidad$sex == sexo.esp & 
-                                         mortalidad$year == anio.esp & 
-                                         mortalidad$edad == edad.esp, "qx"]
-  }
-}
-```
-
 ### Probabilidades de muerte para cada edad
 
 Seguidamente se crea una matriz con las probabilidades de muerte para cada edad desde 0 hasta 115 y desde el 2025 hasta el 2119.
@@ -945,6 +872,73 @@ cuantia.basica <- function(salario.referencia) {
 
   return(cuantia)
 }
+```
+
+Además, se crean las matrices con los montos de los pensionados actuales y se extraen las edades de cada uno de ellos.
+
+```{r pensionados_iniciales}
+# Filtramos la base de pensionados por sexo
+pensionados.h <- pensionados[pensionados$sexo == "M", ]
+pensionados.m <- pensionados[pensionados$sexo == "F", ]
+
+# Filtramos los pensionados hombres con pensión por invalidez o vejez
+pension.vejinv.h <- pensionados.h[pensionados.h$cod_tipo_pension %in% c("Invalidez", "Vejez"), ]
+
+# Determinamos el año en el que empezó a regir cada pensión
+annos <- year(pension.vejinv.h$rige_de_la_pension) - 1959
+
+# Edad de cada pensionado
+edad.vejinv.h <- 2024 - year(pension.vejinv.h$fec_nac)
+
+# Acumulamos el monto de pensión por la inflación correspondiente
+pension.vejinv.h <- pension.vejinv.h$monto * inflacion.cr$factor_acumulado[annos]
+pension.vejinv.h <- matrix(pension.vejinv.h, length(pension.vejinv.h), ncol(edades))
+
+# Se repite el proceso para las mujeres
+pension.vejinv.m <- pensionados.m[pensionados.m$cod_tipo_pension %in% c("Invalidez", "Vejez"), ]
+annos <- year(pension.vejinv.m$rige_de_la_pension) - 1959
+edad.vejinv.m <- 2024 - year(pension.vejinv.m$fec_nac)
+pension.vejinv.m <- pension.vejinv.m$monto * inflacion.cr$factor_acumulado[annos]
+pension.vejinv.m <- matrix(pension.vejinv.m, length(pension.vejinv.m), ncol(edades))
+
+# Filtramos los pensionados hombres cónyuges con pensión por sucesión
+pension.suc.ch <- pensionados.h[pensionados.h$cod_tipo_pension == "Sucesión", ]
+pension.suc.ch <- pension.suc.ch[pension.suc.ch$cod_parentesco == "C", ]
+
+# Repetimos el proceso anterior
+annos <- year(pension.suc.ch$rige_de_la_pension) - 1959
+edad.suc.ch <- 2024 - year(pension.suc.ch$fec_nac)
+pension.suc.ch <- pension.suc.ch$monto * inflacion.cr$factor_acumulado[annos]
+pension.suc.ch <- matrix(pension.suc.ch, length(pension.suc.ch), ncol(edades))
+
+# Filtramos ahora por hombres hijos con pensión por sucesión
+pension.suc.hh <- pensionados.h[pensionados.h$cod_tipo_pension == "Sucesión", ]
+pension.suc.hh <- pension.suc.hh[pension.suc.hh$cod_parentesco == "H", ]
+
+# Repetimos el proceso anterior
+annos <- year(pension.suc.hh$rige_de_la_pension) - 1959
+edad.suc.hh <- 2024 - year(pension.suc.hh$fec_nac)
+pension.suc.hh <- pension.suc.hh$monto * inflacion.cr$factor_acumulado[annos]
+pension.suc.hh <- matrix(pension.suc.hh, length(pension.suc.hh), ncol(edades))
+
+# Lo mismo para mujeres
+pension.suc.cm <- pensionados.m[pensionados.m$cod_tipo_pension == "Sucesión", ]
+pension.suc.cm <- pension.suc.cm[pension.suc.cm$cod_parentesco == "C", ]
+
+annos <- year(pension.suc.cm$rige_de_la_pension) - 1959
+edad.suc.cm <- 2024 - year(pension.suc.cm$fec_nac)
+pension.suc.cm <- pension.suc.cm$monto * inflacion.cr$factor_acumulado[annos]
+pension.suc.cm <- matrix(pension.suc.cm, length(pension.suc.cm), ncol(edades))
+
+pension.suc.hm <- pensionados.m[pensionados.m$cod_tipo_pension == "Sucesión", ]
+pension.suc.hm <- pension.suc.hm[pension.suc.hm$cod_parentesco == "H", ]
+
+annos <- year(pension.suc.hm$rige_de_la_pension) - 1959
+edad.suc.hm <- 2024 - year(pension.suc.hm$fec_nac)
+pension.suc.hm <- pension.suc.hm$monto * inflacion.cr$factor_acumulado[annos]
+pension.suc.hm <- matrix(pension.suc.hm, length(pension.suc.hm), ncol(edades))
+
+rm(pensionados.h, pensionados.m, annos)
 ```
 
 ## Parte estocástica
@@ -2016,16 +2010,357 @@ matriz.suc.m <- matriz.suc.m * monto.suc.m
 matriz.suc.h <- pmin(matriz.suc.h, 3500000)
 matriz.suc.m <- pmin(matriz.suc.m, 3500000)
 
+### Pensionados iniciales
+
+## Vejez e Invalidez
+
+# Inicializamos las matrices de beneficio con ceros
+matriz.vejinv.h <- matrix(as.numeric(0), nrow(pension.vejinv.h), ncol(edades))
+matriz.vejinv.m <- matrix(as.numeric(0), nrow(pension.vejinv.m), ncol(edades))
+
+# Construimos la matriz de beneficios para hombres similar a los otros casos
+for (i in 1:nrow(matriz.vejinv.h)) {
+  
+  edad <- edad.vejinv.h[i]
+  n <- min(nrow(mort.completa.h) - edad + 1, ncol(mort.completa.h))
+  qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.h[edad + k, 1 + k])
+  vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+  estados.pensionado <- qx.pensionado > vect.aleatorio
+  indice <- which(estados.pensionado == TRUE)[1]
+  edad <- edad.vejinv.h[i] + indice
+  
+  matriz.vejinv.h[i, 1:(indice - 1)] <- 1 
+  
+  n <- min(nrow(mort.completa.m) - edad, ncol(mort.completa.m) - indice + 1)
+  qx.conyuge <- mort.completa.m[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
+  vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  # Asignamos el porcentaje de pensión por viudez según la edad
+  if(edad >= 60){
+    
+    matriz.vejinv.h[i, indice:(indice + indice.3)] <- 0.7
+    
+  } else if(edad >= 50) {
+    
+    matriz.vejinv.h[i, indice:(indice + indice.3)] <- 0.6
+    
+    if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+  } else if(edad >= 25){
+    
+    matriz.vejinv.h[i, indice:(indice + indice.3)] <- 0.5
+    
+    if((edad + indice.3) >= 50 & (edad + indice.3) < 60){
+      
+      matriz.vejinv.h[i, (indice + 50 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.h[i, (indice + 50 - edad):(indice + indice.3)] + 0.1
+      
+    } else if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.h[i, (indice + 50 - edad):(indice + 59 - edad)] <- 
+        matriz.vejinv.h[i, (indice + 50 - edad):(indice + 59 - edad)] + 0.1
+      
+      matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+
+    # Simulamos la mortalidad del hijo
+    n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - indice + 1)
+    qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), indice:(indice + n - 1))]
+    vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
+    estados.hijo <- qx.hijo > vect.aleatorio
+    indice.4 <- which(estados.hijo == TRUE)[1] - 1
+    indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
+
+    matriz.vejinv.h[i, indice:(indice + indice.4)] <- 
+      matriz.vejinv.h[i, indice:(indice + indice.4)] + 0.3
+
+  } else {
+    
+    matriz.vejinv.h[i, indice:(indice + indice.3)] <- 0.5
+    
+    if((edad + indice.3) >= 50 & (edad + indice.3) < 60){
+      
+      matriz.vejinv.h[i, (indice + 50 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.h[i, (indice + 50 - edad):(indice + indice.3)] + 0.1
+      
+    } else if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.h[i, (indice + 50 - edad):(indice + 59 - edad)] <- 
+        matriz.vejinv.h[i, (indice + 50 - edad):(indice + 59 - edad)] + 0.1
+      
+      matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.h[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+  }
+}
+
+# Caso para mujeres
+for (i in 1:nrow(matriz.vejinv.m)) {
+  
+  edad <- edad.vejinv.m[i]
+  n <- min(nrow(mort.completa.m) - edad + 1, ncol(mort.completa.m))
+  qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.m[edad + k, 1 + k])
+  vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+  estados.pensionado <- qx.pensionado > vect.aleatorio
+  indice <- which(estados.pensionado == TRUE)[1]
+  edad <- edad + indice
+  
+  matriz.vejinv.m[i, 1:(indice - 1)] <- 1 
+  
+  n <- min(nrow(mort.completa.h) - edad, ncol(mort.completa.h) - indice + 1)
+  qx.conyuge <- mort.completa.h[cbind((edad + 1):(edad + n), indice:(indice + n - 1))]
+  vect.aleatorio <- c(1, runif(length(qx.conyuge) - 1))
+  estados.conyuge <- qx.conyuge > vect.aleatorio
+  indice.3 <- which(estados.conyuge == TRUE)[1] - 1
+  
+  # Asignamos el porcentaje de pensión por viudez según la edad
+  if(edad >= 60){
+    
+    matriz.vejinv.m[i, indice:(indice + indice.3)] <- 0.7
+    
+  } else if(edad >= 50){
+    
+    matriz.vejinv.m[i, indice:(indice + indice.3)] <- 0.6
+    
+    if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+  } else if(edad >= 25){
+    
+    matriz.vejinv.m[i, indice:(indice + indice.3)] <- 0.5
+    
+    if((edad + indice.3) >= 50 & (edad + indice.3) < 60){
+      
+      matriz.vejinv.m[i, (indice + 50 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.m[i, (indice + 50 - edad):(indice + indice.3)] + 0.1
+      
+    } else if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.m[i, (indice + 50 - edad):(indice + 59 - edad)] <- 
+        matriz.vejinv.m[i, (indice + 50 - edad):(indice + 59 - edad)] + 0.1
+      
+      matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+
+    # Simulamos la mortalidad del hijo
+    n <- min(nrow(mort.hijos) - edad + 25, ncol(mort.hijos) - indice + 1)
+    qx.hijo <- mort.hijos[cbind((edad - 24):(edad - 25 + n), indice:(indice + n - 1))]
+    vect.aleatorio <- c(1, runif(length(qx.hijo) - 1))
+    estados.hijo <- qx.hijo > vect.aleatorio
+    indice.4 <- which(estados.hijo == TRUE)[1] - 1
+    indice.4 <- min(indice.4, (49 - edad), na.rm = TRUE)
+
+    matriz.vejinv.m[i, indice:(indice + indice.4)] <- 
+      matriz.vejinv.m[i, indice:(indice + indice.4)] + 0.3
+
+  } else {
+    
+    matriz.vejinv.m[i, indice:(indice + indice.3)] <- 0.5
+    
+    if((edad + indice.3) >= 50 & (edad + indice.3) < 60){
+      
+      matriz.vejinv.m[i, (indice + 50 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.m[i, (indice + 50 - edad):(indice + indice.3)] + 0.1
+      
+    } else if((edad + indice.3) >= 60){
+      
+      matriz.vejinv.m[i, (indice + 50 - edad):(indice + 59 - edad)] <- 
+        matriz.vejinv.m[i, (indice + 50 - edad):(indice + 59 - edad)] + 0.1
+      
+      matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] <- 
+        matriz.vejinv.m[i, (indice + 60 - edad):(indice + indice.3)] + 0.1
+      
+    }
+  }
+}
+
+# Multiplicamos las matrices de beneficios por el monto de pensión
+matriz.vejinv.h <- matriz.vejinv.h * pension.vejinv.h
+matriz.vejinv.m <- matriz.vejinv.m * pension.vejinv.m
+
+# Se impone el tope máximo de 3.5 millones a los beneficios
+matriz.vejinv.h <- pmin(matriz.vejinv.h, 3500000)
+matriz.vejinv.m <- pmin(matriz.vejinv.m, 3500000)
+
+## Sucesión cónyuge
+
+# Inicializamos las matrices de beneficio con ceros
+matriz.suc.ch <- matrix(as.numeric(0), nrow(pension.suc.ch), ncol(edades))
+matriz.suc.cm <- matrix(as.numeric(0), nrow(pension.suc.cm), ncol(edades))
+
+# Construimos la matriz de beneficios para hombres similar a los otros casos
+for (i in 1:nrow(matriz.suc.ch)) {
+  
+  edad <- edad.suc.ch[i]
+  n <- min(nrow(mort.completa.h) - edad + 1, ncol(mort.completa.h))
+  qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.h[edad + k, 1 + k])
+  vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+  estados.pensionado <- qx.pensionado > vect.aleatorio
+  indice <- which(estados.pensionado == TRUE)[1] - 1
+  
+  matriz.suc.ch[i, 1:indice] <- 1
+  
+  # Asignamos el porcentaje de pensión por viudez según la edad
+  if(edad >= 50 & edad < 60){
+    
+    if((edad + indice) >= 60){
+      
+      matriz.suc.ch[i, (61 - edad):indice] <- 0.7 / 0.6
+      
+    }
+    
+  } else if(edad < 50){
+    
+    if((edad + indice) >= 60){
+      
+      matriz.suc.ch[i, (51 - edad):(60 - edad)] <- 0.6 / 0.5
+      
+      matriz.suc.ch[i, (61 - edad):indice] <- 0.7 / 0.6
+      
+    }
+    
+    if((edad + indice) >= 50 & (edad + indice) < 60){
+      
+      matriz.suc.ch[i, (51 - edad):indice] <- 0.6 / 0.5
+      
+    }
+    
+  }
+}
+
+# Caso para las mujeres
+for (i in 1:nrow(matriz.suc.cm)) {
+  
+  edad <- edad.suc.cm[i]
+  n <- min(nrow(mort.completa.m) - edad + 1, ncol(mort.completa.m))
+  qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.m[edad + k, 1 + k])
+  vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+  estados.pensionado <- qx.pensionado > vect.aleatorio
+  indice <- which(estados.pensionado == TRUE)[1] - 1
+  
+  matriz.suc.cm[i, 1:indice] <- 1
+  
+  # Asignamos el porcentaje de pensión por viudez según la edad
+  if(edad >= 50 & edad < 60){
+    
+    if((edad + indice) >= 60){
+      
+      matriz.suc.cm[i, (61 - edad):indice] <- 0.7 / 0.6
+      
+    }
+    
+  } else if(edad < 50){
+    
+    if((edad + indice) >= 60){
+      
+      matriz.suc.cm[i, (51 - edad):(60 - edad)] <- 0.6 / 0.5
+      
+      matriz.suc.cm[i, (61 - edad):indice] <- 0.7 / 0.6
+      
+    }
+    
+    if((edad + indice) >= 50 & (edad + indice) < 60){
+      
+      matriz.suc.cm[i, (51 - edad):indice] <- 0.6 / 0.5
+      
+    }
+    
+  }
+}
+
+# Multiplicamos las matrices de beneficios por el monto de pensión
+matriz.suc.ch <- matriz.suc.ch * pension.suc.ch
+matriz.suc.cm <- matriz.suc.cm * pension.suc.cm
+
+# Se impone el tope máximo de 3.5 millones a los beneficios
+matriz.suc.ch <- pmin(matriz.suc.ch, 3500000)
+matriz.suc.cm <- pmin(matriz.suc.cm, 3500000)
+
+## Sucesión hijo
+
+# Inicializamos las matrices de beneficio con ceros
+matriz.suc.hh <- matrix(as.numeric(0), nrow(pension.suc.hh), ncol(edades))
+matriz.suc.hm <- matrix(as.numeric(0), nrow(pension.suc.hm), ncol(edades))
+
+# Construimos la matriz de beneficios para hombres similar a los otros casos
+for (i in 1:nrow(matriz.suc.hh)) {
+  
+  edad <- edad.suc.hh[i]
+  
+  if(edad < 25){
+    
+    n <- min(nrow(mort.completa.h) - edad + 1, ncol(mort.completa.h))
+    qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.h[edad + k, 1 + k])
+    vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+    estados.pensionado <- qx.pensionado > vect.aleatorio
+    indice <- which(estados.pensionado == TRUE)[1] - 1
+    indice <- min(indice, (25 - edad), na.rm = TRUE)
+    
+    matriz.suc.hh[i, 1:indice] <- 1  
+    
+  }
+  
+}
+
+# Caso para mujeres
+for (i in 1:nrow(matriz.suc.hm)) {
+  
+  edad <- edad.suc.hm[i]
+  
+  if(edad < 25){
+    
+    n <- min(nrow(mort.completa.m) - edad + 1, ncol(mort.completa.m))
+    qx.pensionado <- sapply(0:(n - 1), 
+                          function(k) mort.completa.m[edad + k, 1 + k])
+    vect.aleatorio <- c(1, runif(length(qx.pensionado) - 1))
+    estados.pensionado <- qx.pensionado > vect.aleatorio
+    indice <- which(estados.pensionado == TRUE)[1] - 1
+    indice <- min(indice, (25 - edad), na.rm = TRUE)
+    
+    matriz.suc.hm[i, 1:indice] <- 1  
+    
+  }
+  
+}
+
+# Multiplicamos las matrices de beneficios por el monto de pensión
+matriz.suc.hh <- matriz.suc.hh * pension.suc.hh
+matriz.suc.hm <- matriz.suc.hm * pension.suc.hm
+
+# Se impone el tope máximo de 3.5 millones a los beneficios
+matriz.suc.hh <- pmin(matriz.suc.hh, 3500000)
+matriz.suc.hm <- pmin(matriz.suc.hm, 3500000)
+
 # Limpieza de variables temporales
 rm(qx.conyuge, vect.aleatorio, estados.conyuge, indice.3, qx.hijo, estados.hijo,
    indice.4, edad, col, mascara, monto.suc.h, monto.suc.m, sucesion.aux.h, 
-   sucesion.aux.m, n, indice)
+   sucesion.aux.m, n, indice, qx.pensionado, estados.pensionado)
 
 ### Activo actuarial
 
-# Se crea una lista con las 6 matrices calculadas
-matrices.pension <- list(matriz.vejez.h, matriz.vejez.m, matriz.inv.h, 
-                         matriz.inv.m, matriz.suc.h, matriz.suc.m)
+# Se crea una lista con las 6 matrices principales calculadas
+matrices.pension <- list(matriz.vejez.h, matriz.vejez.m, matriz.inv.h, matriz.inv.m, 
+                         matriz.suc.h, matriz.suc.m, matriz.vejinv.h, matriz.vejinv.m,
+                         matriz.suc.ch, matriz.suc.cm, matriz.suc.hh, matriz.suc.hm)
 
 # Vector que tendrá el monto de las cotizaciones de los pensionados
 cotizacion.pensiones <- rep(0, length(matrices.pension))
@@ -2044,6 +2379,7 @@ for(i in 1:length(matrices.pension)){
 # Se suman las cotizaciones de los pensionados de cada matriz
 cotizacion.pensiones <- sum(cotizacion.pensiones)
 
+# Se construye la matriz con los salarios totales para determinas la masa salarial
 salarios.finales <- rbind(salario.estoc.h * cotizaciones.h / 12, 
                           salario.estoc.m * cotizaciones.m / 12)
 
@@ -2172,6 +2508,7 @@ beneficio.devengado.vejez <- append(beneficio.devengado.vejez, (sum(ben.dev.veje
 beneficio.devengado.invalidez <- append(beneficio.devengado.invalidez, (sum(ben.dev.inv.h) + sum(ben.dev.inv.m)))
 beneficio.devengado.sucesion <- append(beneficio.devengado.sucesion, (sum(ben.dev.suc.h) + sum(ben.dev.suc.m)))
 }
+
 end.time <- Sys.time()
 
 end.time - start.time
@@ -2271,7 +2608,7 @@ Ahora se procede con las razones de solvencia. Inicialmente, se tiene el promedi
 (prom.rs <- mean(unlist(razon.solvencia)))
 ```
 
-Se pueden observar en un gráfico de densidad las distintas razones de solvencia.
+Se puede observar en un gráfico de densidad las distintas razones de solvencia.
 
 ```{r densidad_rs_base}
 # Se crea un dataframe con los datos
@@ -2336,13 +2673,13 @@ theme_minimal()
 
 ## Prima media
 
-Como se menciona en el reglaemnto, se procede con la prima media. Inicialmente se obtiene el promedio de estas:
+Como se menciona en el reglamento, se procede con la prima media. Inicialmente se obtiene el promedio de estas:
 
 ```{r prima_media_base}
 (prom.pm <- mean(unlist(prima.media)))
 ```
 
-se observa que este es negativo debido a que la reserva inicial supera al pasivo actuarial.
+Se observa que este es negativo debido a que la reserva inicial supera al pasivo actuarial.
 
 Un análisis más detallado se observa en el siguiente gráfico:
 
@@ -2406,5 +2743,5 @@ ggplot(data.rc, aes(x = rc)) +
   theme_minimal()
 ```
 
-una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
 
