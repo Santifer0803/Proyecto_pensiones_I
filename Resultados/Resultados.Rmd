@@ -975,7 +975,7 @@ while(abs(prom.despues - prom.antes >= 0.1)){
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
                              nrow(cotizantes.h), ncol(mort.h))
 
-matriz.aleatoria.m <- matrix(runif(nrow(cotizantes.m) * ncol(mortm.m)), 
+matriz.aleatoria.m <- matrix(runif(nrow(cotizantes.m) * ncol(mort.m)), 
                              nrow(cotizantes.m), ncol(mort.m))
 
 # Se continúa con las matrices de probabilidades de postergación
