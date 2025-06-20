@@ -969,7 +969,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes >= 0.1)){
+while(abs(prom.despues - prom.antes >= 0.01)){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -1136,26 +1136,22 @@ cuotas.finales.m <-
   cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)] + rowSums(cotizaciones.m)
 
 # Vamos a obtener los salarios de cada persona, separado por sexo, de la parte estocástica
-salarios.aux.h <- lapply(1:nrow(salario.estoc.h), function(i) {
-  rep(salario.estoc.h[i,],
-      times = cotizaciones.h[i, ])
-})
-salarios.aux.m <- lapply(1:nrow(salario.estoc.m), function(i) {
-  rep(salario.estoc.m[i,],
-      times = cotizaciones.m[i, ])
-})
-
-# Luego, ponemos los salarios en la matriz de ceros
-matriz.salarios.h <- t(mapply(function(salarios, largo) {
-  c(salarios, rep(0, ncol(matriz.salarios.h) - length(salarios)))
-}, salarios.aux.h, lengths(salarios.aux.h)))
-matriz.salarios.m <- t(mapply(function(salarios, largo) {
-  c(salarios, rep(0, ncol(matriz.salarios.m) - length(salarios)))
-}, salarios.aux.m, lengths(salarios.aux.m)))
+salarios.aux.h <- do.call(rbind, lapply(1:nrow(salario.estoc.h), function(i) {
+  unlist(lapply(1:ncol(salario.estoc.h), function(j) {
+    c(rep(salario.estoc.h[i, j], times = cotizaciones.h[i, j]),
+      rep(0, 12 - cotizaciones.h[i, j]))
+  }))
+}))
+salarios.aux.m <- do.call(rbind, lapply(1:nrow(salario.estoc.m), function(i) {
+  unlist(lapply(1:ncol(salario.estoc.m), function(j) {
+    c(rep(salario.estoc.m[i, j], times = cotizaciones.m[i, j]),
+      rep(0, 12 - cotizaciones.m[i, j]))
+  }))
+}))
 
 # Se juntan las matrices de salarios
-matriz.salarios.h <- cbind(cotizantes.h, matriz.salarios.h)
-matriz.salarios.m <- cbind(cotizantes.m, matriz.salarios.m)
+matriz.salarios.h <- cbind(cotizantes.h, salarios.aux.h)
+matriz.salarios.m <- cbind(cotizantes.m, salarios.aux.m)
 
 # Obtenemos los mejores salarios ordenados (pueden incluir 0), separados por sexo
 salarios.top.h <- t(apply(matriz.salarios.h, 1, function(fila) {
@@ -1258,65 +1254,79 @@ cuotas.binario.m <- mapply(function(i, j) {
   requisitos.inv.m[i, j] <= cuotas.finales.m[i]
 }, i = filas.inv.m, j = restantes.inv.m)
 
-# Ahora, se ve si han tenido 12 cuotas en los últimos 24 meses
+# Se obtienen las edades para las cuales se invalidó la persona (se pone acá y se borra la anterior que estaba)
+edad.final.h <- restantes.inv.h + edades.h[filas.inv.h, 1] - 1
+edad.final.m <- restantes.inv.m + edades.m[filas.inv.m, 1] - 1
+
+# En este punto, se ve si las personas pensionadas por invalidez tienen las cuotas necesarias según el inciso b del artículo 6
 requisito.cuotas.h <-
-  ifelse(
-    restantes.inv.h == 1,
-    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.inv.h,][, 337:360] > 10000),
+  (ifelse(
+    ((restantes.inv.h == 1) * (edad.final.h < 48)) == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 337:360] > 10000),
     ifelse(
-      restantes.inv.h == 2,
-      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1),][filas.inv.h,][, 349:360] > 10000) + cotizaciones.h[filas.inv.h, 1],
-      rowSums(cotizaciones.h[filas.inv.h, 1:2])
+      ((restantes.inv.h == 2) * (edad.final.h < 48)) == 1,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 349:360] > 10000) + cotizaciones.h[filas.inv.h, 1],
+      ifelse((edad.final.h < 48), rowSums(cotizaciones.h[filas.inv.h, 1:2]), 0)
     )
-  ) > 11
+  ) > 11) + (ifelse(((restantes.inv.h == 1) * (edad.final.h > 47)) == 1,
+                    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 313:360] > 10000),
+                    ifelse(((restantes.inv.h == 2) * (edad.final.h > 47)) == 1,
+                           rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 325:360] > 10000) + cotizaciones.h[filas.inv.h, 1],
+                           ifelse(((restantes.inv.h == 3) * (edad.final.h > 47)) == 1,
+                                  rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 337:360] > 10000) + rowSums(cotizaciones.h[filas.inv.h, 1:2]),
+                                  ifelse(((restantes.inv.h == 4) * (edad.final.h > 47)) == 1,
+                                         rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 1), ][filas.inv.h, ][, 349:360] > 10000) + rowSums(cotizaciones.h[filas.inv.h, 1:3]),
+                                         ifelse((edad.final.h > 47) == 1, rowSums(cotizaciones.h[filas.inv.h, 1:4]), 0)
+                                  )
+                           )
+                    )
+  )) > 23
 requisito.cuotas.m <-
-  ifelse(
-    restantes.inv.m == 1,
-    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.inv.m,][, 337:360] > 10000),
+  (ifelse(
+    ((restantes.inv.m == 1) * (edad.final.m < 48)) == 1,
+    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 337:360] > 10000),
     ifelse(
-      restantes.inv.m == 2,
-      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2),][filas.inv.m,][, 349:360] > 10000) + cotizaciones.m[filas.inv.m, 1],
-      rowSums(cotizaciones.m[filas.inv.m, 1:2])
+      ((restantes.inv.m == 2) * (edad.final.m < 48)) == 1,
+      rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 349:360] > 10000) + cotizaciones.m[filas.inv.m, 1],
+      ifelse((edad.final.m < 48), rowSums(cotizaciones.m[filas.inv.m, 1:2]), 0)
     )
-  ) > 11
+  ) > 11) + (ifelse(((restantes.inv.m == 1) * (edad.final.m > 47)) == 1,
+                    rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 313:360] > 10000),
+                    ifelse(((restantes.inv.m == 2) * (edad.final.m > 47)) == 1,
+                           rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 325:360] > 10000) + cotizaciones.m[filas.inv.m, 1],
+                           ifelse(((restantes.inv.m == 3) * (edad.final.m > 47)) == 1,
+                                  rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 337:360] > 10000) + rowSums(cotizaciones.m[filas.inv.m, 1:2]),
+                                  ifelse(((restantes.inv.m == 4) * (edad.final.m > 47)) == 1,
+                                         rowSums(cotizaciones.vp[which(cotizantes.activos$sexo == 2), ][filas.inv.m, ][, 349:360] > 10000) + rowSums(cotizaciones.m[filas.inv.m, 1:3]),
+                                         ifelse((edad.final.m > 47) == 1, rowSums(cotizaciones.m[filas.inv.m, 1:4]), 0)
+                                  )
+                           )
+                    )
+  )) > 23
 
 # Si una persona inválida tiene las cuotas necesarias para su edad y cotizó 12 veces en los últimos 24 meses, tiene derecho a recibir pensión
 resultado.binario.h <- cuotas.binario.h * requisito.cuotas.h
 resultado.binario.m <- cuotas.binario.m * requisito.cuotas.m
 
-# Se obtienen las edades para las cuales se invalidó la persona
-edad.final.h <- restantes.inv.h + edades.h[filas.inv.h, 1] - 1
-edad.final.m <- restantes.inv.m + edades.m[filas.inv.m, 1] - 1
-
-# Se obtiene el beneficio correspondiente
+# Beneficios por invalidez
 beneficio.invalidez.h <-
-  ifelse(
-    cuotas.finales.h[filas.inv.h] > 179,
-    (pmin(300, cuotas.finales.h[which(salida.h == "Invalido")]) / 300) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
-    ifelse(
-      resultado.binario.h == 1,
-      (pmin(180, cuotas.finales.h[which(salida.h == "Invalido")]) / 180) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
-      ifelse(
-        cuotas.finales.h[filas.inv.h] > 59,
-        (cuotas.finales.h[filas.inv.h] / requisitos.inv[match(edad.final.h, edad), cotizaciones_min]) * (rowSums(salarios.top.h[which(salida.h == "Invalido"),]) / rowSums(salarios.top.h[which(salida.h == "Invalido"),] > 10000)),
-        0
-      )
-    )
-  )
+  ifelse(cuotas.finales.h[filas.inv.h] > 299,
+         (rowSums(salarios.top.h[filas.inv.h, ]) / 300),
+         ifelse(cuotas.finales.h[filas.inv.h] > 179, (
+           rowSums(salarios.top.h[filas.inv.h, ]) / rowSums(salarios.top.h[filas.inv.h, ] > 9999)
+         ), ifelse(((cuotas.finales.h[filas.inv.h] < 180) * (resultado.binario.h == 1)
+         ) == 1, (
+           rowSums(salarios.top.h[filas.inv.h, ]) / rowSums(salarios.top.h[filas.inv.h, ] > 9999)
+         ), 0)))
 beneficio.invalidez.m <-
-  ifelse(
-    cuotas.finales.m[filas.inv.m] > 179,
-    (pmin(300, cuotas.finales.m[which(salida.m == "Invalido")]) / 300) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
-    ifelse(
-      resultado.binario.m == 1,
-      (pmin(180, cuotas.finales.m[which(salida.m == "Invalido")]) / 180) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
-      ifelse(
-        cuotas.finales.m[filas.inv.m] > 59,
-        (cuotas.finales.m[filas.inv.m] / requisitos.inv[match(edad.final.m, edad), cotizaciones_min]) * (rowSums(salarios.top.m[which(salida.m == "Invalido"),]) / rowSums(salarios.top.m[which(salida.m == "Invalido"),] > 10000)),
-        0
-      )
-    )
-  )
+  ifelse(cuotas.finales.m[filas.inv.m] > 299,
+         (rowSums(salarios.top.m[filas.inv.m, ]) / 300),
+         ifelse(cuotas.finales.m[filas.inv.m] > 179, (
+           rowSums(salarios.top.m[filas.inv.m, ]) / rowSums(salarios.top.m[filas.inv.m, ] > 9999)
+         ), ifelse(((cuotas.finales.m[filas.inv.m] < 180) * (resultado.binario.m == 1)
+         ) == 1, (
+           rowSums(salarios.top.m[filas.inv.m, ]) / rowSums(salarios.top.m[filas.inv.m, ] > 9999)
+         ), 0)))
 
 # Primero, los índices de las personas que mueren
 filas.muerte.h <- which(salida.h == "Fallecido")
