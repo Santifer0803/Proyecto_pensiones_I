@@ -960,8 +960,8 @@ balance <- list()
 prima.media <- list()
 
 # Inicializamos los promedios para asegurarnos de que se harán mínimo 2 iteraciones
-prom.antes <- 1
-prom.despues <- Inf
+prom.antes <- 0
+prom.despues <- 1
 ```
 
 Con esto, se procede con el modelo en sí.
@@ -969,7 +969,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes >= 0.01)){
+while(abs(prom.despues - prom.antes >= 0.1)){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
