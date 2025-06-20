@@ -958,6 +958,9 @@ razon.solvencia <- list()
 annos.crit <- list()
 balance <- list()
 prima.media <- list()
+beneficio.devengado.vejez <- list()
+beneficio.devengado.invalidez <- list()
+beneficio.devengado.sucesion <- list()
 
 # Inicializamos los promedios para asegurarnos de que se harán mínimo 2 iteraciones
 prom.antes <- 0
@@ -969,7 +972,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.01){
+while(abs(prom.despues - prom.antes) >= 0.001){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2146,60 +2149,28 @@ prom.despues <- mean(unlist(razon.solvencia))
 
 ### Beneficios devengados
 
-# Obtenemos las probabilidades de sobrevivencia de las personas pensionadas por vejez
-tpx.vejez.h <-
-  sobrevivencia.h[filas.vejez.h,][cbind(1:nrow(sobrevivencia.h[filas.vejez.h,]), restantes.ret.h)]
-tpx.vejez.m <-
-  sobrevivencia.m[filas.vejez.m,][cbind(1:nrow(sobrevivencia.m[filas.vejez.m,]), restantes.ret.m)]
-
-# Obtenemos las probabilidades de sobrevivencia de las personas pensionadas por invalidez
-tpx.invalidez.h <-
-  sobrevivencia.h[filas.inv.h,][cbind(1:nrow(sobrevivencia.h[filas.inv.h,]), restantes.inv.h)]
-tpx.invalidez.m <-
-  sobrevivencia.m[filas.inv.m,][cbind(1:nrow(sobrevivencia.m[filas.inv.m,]), restantes.inv.m)]
-
-# Obtenemos las probabilidades de sobrevivencia de las personas con derecho sucesorio
-tpx.sucesion.h <-
-  sobrevivencia.h[filas.muerte.h,][cbind(1:nrow(sobrevivencia.h[filas.muerte.h, ]), col.fallecido.h)]
-tpx.sucesion.m <-
-  sobrevivencia.m[filas.muerte.m,][cbind(1:nrow(sobrevivencia.m[filas.muerte.m, ]), col.fallecido.m)]
-
-# Obtenemos las anualidades para el beneficio devengado de vejez, separado por sexo
-anualidades.vejez.h <-
-  df.anualidades[match((edades.h[filas.vejez.h, 1] - 1 + restantes.ret.h), edad), hombres]
-anualidades.vejez.m <-
-  df.anualidades[match((edades.m[filas.vejez.m, 1] - 1 + restantes.ret.m), edad), mujeres]
-
-# Obtenemos las anualidades para el beneficio devengado de invalidez, separado por sexo
-anualidades.invalidez.h <-
-  df.anualidades[match((edades.h[filas.inv.h, 1] - 1 + restantes.inv.h), edad), hombres]
-anualidades.invalidez.m <-
-  df.anualidades[match((edades.m[filas.inv.m, 1] - 1 + restantes.inv.m), edad), mujeres]
-
-# Obtenemos las anualidades para el beneficio devengado de sucesión, separado por sexo
-anualidades.sucesion.h <-
-  df.anualidades[match((edades.h[filas.muerte.h, 1] - 1 + col.fallecido.h), edad), hombres]
-anualidades.sucesion.m <-
-  df.anualidades[match((edades.m[filas.muerte.m, 1] - 1 + col.fallecido.m), edad), mujeres]
-
 # Beneficio devengado por vejez
 ben.dev.vejez.h <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.vejez.h] / cuotas.finales.h[filas.vejez.h]) * pension.vejez.h * tpx.vejez.h * anualidades.vejez.h * ((1 + interes.real) ^ -restantes.ret.h)
+  rowSums(matrices.pension[[1]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.vejez.h] / cuotas.finales.h[filas.vejez.h])
 ben.dev.vejez.m <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.vejez.m] / cuotas.finales.m[filas.vejez.m]) * pension.vejez.m * tpx.vejez.m * anualidades.vejez.m * ((1 + interes.real) ^ -restantes.ret.m)
+  rowSums(matrices.pension[[2]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.vejez.m] / cuotas.finales.m[filas.vejez.m])
 
 # Beneficio devengado por invalidez
 ben.dev.inv.h <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.inv.h] / cuotas.finales.h[filas.inv.h]) * pension.invalidez.h * tpx.invalidez.h * anualidades.invalidez.h * ((1 + interes.real) ^ -restantes.inv.h)
+  rowSums(matrices.pension[[3]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.inv.h] / cuotas.finales.h[filas.inv.h])
 ben.dev.inv.m <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.inv.m] / cuotas.finales.m[filas.inv.m]) * pension.invalidez.m * tpx.invalidez.m * anualidades.invalidez.m * ((1 + interes.real) ^ -restantes.inv.m)
+  rowSums(matrices.pension[[4]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.inv.m] / cuotas.finales.m[filas.inv.m])
 
 # Beneficio devengado por sucesión
 ben.dev.suc.h <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.muerte.h] / cuotas.finales.h[filas.muerte.h]) * (pension.sucesion.h) * tpx.sucesion.h * anualidades.sucesion.h * ((1 + interes.real) ^ -col.fallecido.h)
+  rowSums(matrices.pension[[5]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.muerte.h] / cuotas.finales.h[filas.muerte.h])
 ben.dev.suc.m <-
-  (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.muerte.m] / cuotas.finales.m[filas.muerte.m]) * (pension.sucesion.m) * tpx.sucesion.m * anualidades.sucesion.m * ((1 + interes.real) ^ -col.fallecido.m)
-  
+  rowSums(matrices.pension[[6]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.muerte.m] / cuotas.finales.m[filas.muerte.m])
+
+# Se guardan los beneficios devengados en listas
+beneficio.devengado.vejez <- append(beneficio.devengado.vejez, (sum(ben.dev.vejez.h) + sum(ben.dev.vejez.m)))
+beneficio.devengado.invalidez <- append(beneficio.devengado.invalidez, (sum(ben.dev.inv.h) + sum(ben.dev.inv.m)))
+beneficio.devengado.sucesion <- append(beneficio.devengado.sucesion, (sum(ben.dev.suc.h) + sum(ben.dev.suc.m)))
 }
 end.time <- Sys.time()
 
@@ -2211,7 +2182,7 @@ end.time - start.time
 (Esto es para sacar las métricas cuando ya se hicieron todas las iteraciones)
 (Hay que tener en cuenta cuando la masa salarial se hace 0)
 
-```{r}
+```{r metricas_base}
 reserva <- reserva.ini
 
 tasa.ingresos <- c()
@@ -2249,6 +2220,8 @@ for(i in 1:ncol(salarios.finales)){
 ```
 
 # Resultados base
+
+## Salarios base
 
 Se grafican los salarios ajustados por inflación.
 
@@ -2289,3 +2262,149 @@ Seguidamente se realiza un ejemplo donde se recibe el ID y la función imprime s
 ```{r grafico_funcion_proyectar_persona}
 graficar.proyeccion.id("097434")
 ```
+
+## Razón de solvencia
+
+Ahora se procede con las razones de solvencia. Inicialmente, se tiene el promedio de las razones de solvencia para este caso:
+
+```{r rs_base}
+(prom.rs <- mean(unlist(razon.solvencia)))
+```
+
+Se pueden observar en un gráfico de densidad las distintas razones de solvencia.
+
+```{r densidad_rs_base}
+# Se crea un dataframe con los datos
+data.rs <- data.frame(rs = unlist(razon.solvencia))
+
+# Gráfico de las razones de solvencia
+ggplot(data.rs, aes(x = rs)) +
+  geom_density(color = "#A34022", linewidth = 1.2) +
+  geom_vline(
+    xintercept = prom.rs,
+    color = "#F59A3A",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "text",
+    x = prom.rs,
+    y = 0.5,
+    label = "Media de las RS",
+    color = "#F59A3A",
+    angle = 90,
+    vjust = -0.5,
+    size = 3.5
+  ) +
+  labs(x = "Razón de solvencia",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+## Años críticos
+
+En primer lugar, se obtendrá un promedio de los años críticos.
+
+```{r annos_criticos_base}
+# Se guarda como matriz
+annos.crit.mat <- do.call(cbind, annos.crit)
+
+# Se redondean los promedios
+round(rowMeans(annos.crit.mat, na.rm = TRUE), 0)
+```
+
+Los anteriores están ordenados en primer, segundo y tercer año crítico respectivamente. Si los resultados son **NaN** significa que en ningún caso se llega a ese año crítico.
+
+Para el caso en estudio, usualmente solo se llega al primer año crítico entre las iteraciones, por lo que se grafica ese caso.
+
+```{r grafico_annos_criticos_base}
+# Se guardan los primeros años críticos en un DataFrame
+df.annos.crit <- data.frame(primer_momento = annos.crit.mat[1, ])
+
+# Se grafican los primeros momentos correspondientes
+ggplot(df.annos.crit, aes(x = primer_momento)) +
+  geom_histogram(
+    aes(y = after_stat(count / sum(count))),
+    bins = 2,
+    fill = "#A34022",
+    color = "black"
+  ) +
+  labs(x = "Año",
+       y = "Densidad")
+theme_minimal()
+```
+
+## Prima media
+
+Como se menciona en el reglaemnto, se procede con la prima media. Inicialmente se obtiene el promedio de estas:
+
+```{r prima_media_base}
+(prom.pm <- mean(unlist(prima.media)))
+```
+
+se observa que este es negativo debido a que la reserva inicial supera al pasivo actuarial.
+
+Un análisis más detallado se observa en el siguiente gráfico:
+
+```{r grafico_prima_media_base}
+# Se crea un dataframe con los datos
+data.pm <- data.frame(pm = unlist(prima.media))
+
+# Gráfico de las primas medias niveladas
+ggplot(data.pm, aes(x = pm)) +
+  geom_density(color = "#A34022", linewidth = 1.2) +
+  geom_vline(
+    xintercept = prom.pm,
+    color = "#F59A3A",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "text",
+    x = prom.pm,
+    y = 2,
+    label = "Media de la prima media",
+    color = "#F59A3A",
+    angle = 90,
+    vjust = -0.5,
+    size = 3.5
+  ) +
+  labs(x = "Prima media nivelada",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+## Razón del fondo de contingencia
+
+Se muestra la razón del fondo de contingencia de la última simulación, visualizada en un gráfico.
+
+```{r grafico_rc_base}
+# Se crea un dataframe con los datos
+data.rc <- data.frame(rc = razon.fondo.cont)
+
+# Gráfico de las razones del fondo de contingencia
+ggplot(data.rc, aes(x = rc)) +
+  geom_density(color = "#A34022", linewidth = 1.2) +
+  geom_vline(
+    xintercept = mean(razon.fondo.cont),
+    color = "#F59A3A",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "text",
+    x = mean(razon.fondo.cont),
+    y = 2,
+    label = "Media de la RC",
+    color = "#F59A3A",
+    angle = 90,
+    vjust = -0.5,
+    size = 3.5
+  ) +
+  labs(x = "Razón del fondo de contingencia",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+
