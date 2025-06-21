@@ -10488,7 +10488,7 @@ for(i in 1:ncol(salarios.finales)){
 }
 ```
 
-## Resultados de incremento de mortalidad
+## Resultados de la disminución de mortalidad
 
 ## Razón de solvencia
 
@@ -12461,7 +12461,7 @@ for(i in 1:ncol(salarios.finales)){
 }
 ```
 
-## Resultados de incremento de mortalidad
+## Resultados de la eliminación del retiro anticipado
 
 ## Razón de solvencia
 
