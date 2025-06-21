@@ -761,6 +761,8 @@ cotizaciones.acum.m[which(cotizaciones.acum.m[, 1] == 0),] <-
 # Se define la tasa de interés (determinista)
 interes.real <- 0.0738
 
+tasa.mensual <- (1 + interes.real)^(1/12) - 1
+
 # Se crea el vector con las tasas de descuento
 s <- 1 / ((1 + interes.real)^(0:(ncol(matriz.salarios) - 1)))
 
@@ -1562,20 +1564,9 @@ for (i in 1:nrow(matriz.vejez.m)) {
   matriz.vejez.m[i, indice:(indice + indice.3)] <- 0.7
 }
 
-# Se construyen matrices con los montos de pensión (monto de pensión asociado al 1 o 0.7 anteriores)
-
-monto.vejez.h <- matrix(as.numeric(0), nrow(matriz.vejez.h), ncol(matriz.vejez.h))
-
-# Se construye una máscara lógica para identificar las columnas (años) posteriores al retiro
-mascara <- col(monto.vejez.h) >= restantes.ret.h[row(monto.vejez.h)]
-
-# Se asignan los valores de pensión correspondientes a los años de retiro
-monto.vejez.h[mascara] <- pension.vejez.h[row(monto.vejez.h)[mascara]]
-
-# Repetimos el proceso para mujeres
-monto.vejez.m <- matrix(as.numeric(0), nrow(matriz.vejez.m), ncol(matriz.vejez.m))
-mascara <- col(monto.vejez.m) >= restantes.ret.m[row(monto.vejez.m)]
-monto.vejez.m[mascara] <- pension.vejez.m[row(monto.vejez.m)[mascara]]
+# Se construyen las matrices con los montos de pensión
+monto.vejez.h <- matrix(pension.vejez.h, nrow(matriz.vejez.h), ncol(matriz.vejez.h))
+monto.vejez.m <- matrix(pension.vejez.m, nrow(matriz.vejez.m), ncol(matriz.vejez.m))
 
 # Multiplicamos las matrices de beneficios (0, 1, 0.7) por el monto de pensión
 matriz.vejez.h <- matriz.vejez.h * monto.vejez.h
@@ -1783,15 +1774,9 @@ for (i in 1:nrow(matriz.inv.m)) {
   }
 }
 
-# Creamos la matriz de montos para hombres
-monto.inv.h <- matrix(as.numeric(0), nrow(matriz.inv.h), ncol(matriz.inv.h))
-mascara <- col(monto.inv.h) >= restantes.inv.h[row(monto.inv.h)]
-monto.inv.h[mascara] <- pension.invalidez.h[row(monto.inv.h)[mascara]]
-
-# Creamos la matriz de montos para mujeres
-monto.inv.m <- matrix(as.numeric(0), nrow(matriz.inv.m), ncol(matriz.inv.m))
-mascara <- col(monto.inv.m) >= restantes.inv.m[row(monto.inv.m)]
-monto.inv.m[mascara] <- pension.invalidez.m[row(monto.inv.m)[mascara]]
+# Creamos las matrices de montos
+monto.inv.h <- matrix(pension.invalidez.h, nrow(matriz.inv.h), ncol(matriz.inv.h))
+monto.inv.m <- matrix(pension.invalidez.m, nrow(matriz.inv.m), ncol(matriz.inv.m))
 
 # Aplicamos el monto a cada proporción de pensión
 matriz.inv.h <- matriz.inv.h * monto.inv.h
@@ -1982,15 +1967,9 @@ for(i in 1:nrow(matriz.suc.m)){
 sucesion.aux.h <- ifelse(tiene.derecho.sucesion.h, beneficio.base.h, 0)
 sucesion.aux.m <- ifelse(tiene.derecho.sucesion.m, beneficio.base.m, 0)
 
-# Se crean matrices de monto por sucesión con ceros
-monto.suc.h <- matrix(as.numeric(0), nrow(matriz.suc.h), ncol(matriz.suc.h))
-mascara <- col(monto.suc.h) >= col.fallecido.h[row(monto.suc.h)]  # Posiciones válidas
-monto.suc.h[mascara] <- sucesion.aux.h[row(monto.suc.h)[mascara]]  # Se asignan los montos
-
-# Se repite el proceso para mujeres
-monto.suc.m <- matrix(as.numeric(0), nrow(matriz.suc.m), ncol(matriz.suc.m))
-mascara <- col(monto.suc.m) >= col.fallecido.m[row(monto.suc.m)]
-monto.suc.m[mascara] <- sucesion.aux.m[row(monto.suc.m)[mascara]]
+# Se crean matrices con los montos por sucesión
+monto.suc.h <- matrix(sucesion.aux.h, nrow(matriz.suc.h), ncol(matriz.suc.h))
+monto.suc.m <- matrix(sucesion.aux.m, nrow(matriz.suc.m), ncol(matriz.suc.m))
 
 # Se multiplica la proporción asignada por el monto base
 matriz.suc.h <- matriz.suc.h * monto.suc.h
@@ -2342,12 +2321,12 @@ matriz.suc.hm <- pmin(matriz.suc.hm, 3500000)
 
 # Limpieza de variables temporales
 rm(qx.conyuge, vect.aleatorio, estados.conyuge, indice.3, qx.hijo, estados.hijo,
-   indice.4, edad, col, mascara, monto.suc.h, monto.suc.m, sucesion.aux.h, 
+   indice.4, edad, col, monto.suc.h, monto.suc.m, sucesion.aux.h, 
    sucesion.aux.m, n, indice, qx.pensionado, estados.pensionado)
 
 ### Activo actuarial
 
-# Se crea una lista con las 6 matrices principales calculadas
+# Se crea una lista con las matrices calculadas
 matrices.pension <- list(matriz.vejez.h, matriz.vejez.m, matriz.inv.h, matriz.inv.m, 
                          matriz.suc.h, matriz.suc.m, matriz.vejinv.h, matriz.vejinv.m,
                          matriz.suc.ch, matriz.suc.cm, matriz.suc.hh, matriz.suc.hm)
@@ -2406,7 +2385,7 @@ for(i in 1:ncol(salarios.finales)){
   cotizaciones <- c(cotizaciones, (sum(salarios.finales[, i]) * 0.15))
   
   # Costo de las pensiones
-  costo.pens <- sum(Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, i]))))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, i])))
   
   # Gasto administrativo del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -2506,41 +2485,46 @@ end.time - start.time
 
 ### Flujo escenario final
 
-(Esto es para sacar las métricas cuando ya se hicieron todas las iteraciones)
-(Hay que tener en cuenta cuando la masa salarial se hace 0)
+Una vez el modelo haya terminado de hacer las iteraciones, se procede a determinar la tasa de ingresos, la prima de reparto y la razón de fondo de contingencias, usando las variables de la última iteración.
 
 ```{r metricas_base}
+# Inicializamos la reserva inicial en el 2025 y los vectores para las métricas
 reserva <- reserva.ini
-
 tasa.ingresos <- c()
-
 prima.reparto <- c()
-
 razon.fondo.cont <- c()
 
+# Iteramos sobre cada año
 for(i in 1:ncol(salarios.finales)){
   
+  # Masa salarial
   ms <- sum(salarios.finales[, i])
   
+  # Cotizaciones de los trabajadores
   cotizaciones <- ms * 0.15
   
-  costo.pens <- sum(Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, i]))))
+  # Costo de las pensiones en cada año
+  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, i])))
   
+  # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
   
+  # Egresos totales
   total.egresos <- costo.pens + sem
   
+  # Rendimientos
   rends <- ifelse((reserva + (cotizaciones - total.egresos) / 2) * interes.real > 0, 
                   (reserva + (cotizaciones - total.egresos) / 2) * interes.real, 0)
   
+  # Ingresos totales
   total.ingresos <- cotizaciones + rends
   
-  tasa.ingresos <- c(tasa.ingresos, total.ingresos / ms)
-  
-  prima.reparto <- c(prima.reparto, total.egresos / ms)
-  
+  # Guardamos las métricas
+  tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
+  prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
   razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
   
+  # Actualizamos la reserva inicial para el siguiente año
   reserva <- reserva + total.ingresos - total.egresos + sem
   
 }
@@ -2644,7 +2628,7 @@ Los anteriores están ordenados en primer, segundo y tercer año crítico respec
 
 Para el caso en estudio, usualmente solo se llega al primer año crítico entre las iteraciones, por lo que se grafica ese caso.
 
-```{r grafico_annos_criticos_base}
+```{r grafico_annos_criticos_base, message = FALSE, warning = FALSE}
 # Se guardan los primeros años críticos en un DataFrame
 df.annos.crit <- data.frame(primer_momento = annos.crit.mat[1, ])
 
