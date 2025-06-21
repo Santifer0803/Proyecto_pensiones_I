@@ -2903,7 +2903,7 @@ matriz.balance <- do.call(cbind, balance)
 rowMeans(matriz.balance)
 ```
 
-Seguidamente, como pide el reglamento, se muestra el pasivo separado por generaciones y por razón de salida.
+Seguidamente, como pide el reglamento, se muestran las pensiones separadas por generaciones y por razón de salida.
 
 ```{r pasivo_separado_base}
 # Se defina una matriz para obtener los montos
@@ -2912,7 +2912,7 @@ matriz.pasivo <- matrix(0, nrow = 6, ncol = (length(pensiones) / 12))
 # Se obtienen los montos con un ciclo
 for (i in 1:ncol(matriz.pasivo)) {
   # Se hace la suma de la iteración correspondiente
-  suma.iter <- sum(sapply(matriz.pasivo[(1+(i*12 - 12)):(12*i)], sum))
+  suma.iter <- sapply(pensiones[(1+(i*12 - 12)):(12*i)], sum)
   
   # Se actualiza la matriz
   matriz.pasivo[, i] <-
@@ -2928,8 +2928,8 @@ for (i in 1:ncol(matriz.pasivo)) {
 (
   df.pasivo <-
     data.frame(
-      "Generación actual" = c(rowSums(matriz.pasivo)[1:3], sum(rowSums(matriz.pasivo)[1:3])),
-      "Generación pensionada" = c(rowSums(matriz.pasivo)[4:6], sum(rowSums(matriz.pasivo)[4:6])),
+      "Generación actual" = c(rowMeans(matriz.pasivo)[1:3], sum(rowMeans(matriz.pasivo)[1:3])),
+      "Generación pensionada" = c(rowMeans(matriz.pasivo)[4:6], sum(rowMeans(matriz.pasivo)[4:6])),
       row.names = c("Vejez", "Invalidez", "Sucesion", "Total")
     )
 )
