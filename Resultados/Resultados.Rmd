@@ -2569,7 +2569,7 @@ beneficio.devengado.invalidez <- append(beneficio.devengado.invalidez, (sum(ben.
 beneficio.devengado.sucesion <- append(beneficio.devengado.sucesion, (sum(ben.dev.suc.h) + sum(ben.dev.suc.m)))
 
 # Se guardan las matrices de pensión
-pensiones <- append(pensiones, matrices.pension)
+pensiones <- append(pensiones, matrices.vp)
 }
 
 end.time <- Sys.time()
@@ -2907,17 +2907,21 @@ Seguidamente, como pide el reglamento, se muestra el pasivo separado por generac
 
 ```{r pasivo_separado_base}
 # Se defina una matriz para obtener los montos
-matriz.pasivo <- matrix(0, nrow = 6, ncol = length(pensiones))
+matriz.pasivo <- matrix(0, nrow = 6, ncol = (length(pensiones) / 12))
 
 # Se obtienen los montos con un ciclo
 for (i in 1:ncol(matriz.pasivo)) {
+  # Se hace la suma de la iteración correspondiente
+  suma.iter <- sum(sapply(matriz.pasivo[(1+(i*12 - 12)):(12*i)], sum))
+  
+  # Se actualiza la matriz
   matriz.pasivo[, i] <-
-    c((sum(pensiones[[i]][[1]] * matriz.vp) + sum(pensiones[[i]][[2]] * matriz.vp)),
-      (sum(pensiones[[i]][[3]] * matriz.vp) + sum(pensiones[[i]][[4]] * matriz.vp)),
-      (sum(pensiones[[i]][[5]] * matriz.vp) + sum(pensiones[[i]][[6]] * matriz.vp)),
-      (sum(pensiones[[i]][[7]] * matriz.vp) + sum(pensiones[[i]][[8]] * matriz.vp)),
-      (sum(pensiones[[i]][[9]] * matriz.vp) + sum(pensiones[[i]][[10]] * matriz.vp)),
-      (sum(pensiones[[i]][[11]] * matriz.vp) + sum(pensiones[[i]][[12]] * matriz.vp)))
+    c((suma.iter[1] + suma.iter[2]),
+      (suma.iter[3] + suma.iter[4]),
+      (suma.iter[5] + suma.iter[6]),
+      (suma.iter[7] + suma.iter[8]),
+      (suma.iter[9] + suma.iter[10]),
+      (suma.iter[11] + suma.iter[12]))
 }
 
 # Se pone la información en un dataframe
