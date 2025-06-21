@@ -2857,5 +2857,3 @@ ggplot(beneficio.devengado.final, aes(x = categoria, y = (ben.dev / 1000000000))
   theme_minimal()
 ```
 
-
-
