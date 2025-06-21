@@ -2813,7 +2813,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_base}
+```{r promedio_pr_base}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -4733,7 +4733,7 @@ Una vez más, se aprecia que la reserva es muy grande en comparación con los eg
 
 La tasa de ingresos se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_pesimista}
+```{r promedio_pr_pesimista}
 (prom.ti <- mean(tasa.ingresos, na.rm = TRUE))
 ```
 
@@ -4773,7 +4773,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_pesimista}
+```{r promedio_pr_pesimista}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -6708,7 +6708,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_optimista}
+```{r promedio_pr_optimista}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -8700,7 +8700,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_as1}
+```{r promedio_pr_as1}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -10677,7 +10677,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_as2}
+```{r promedio_pr_as2}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -12650,7 +12650,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_as3}
+```{r promedio_pr_as3}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
@@ -14572,7 +14572,7 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_ti_as4}
+```{r promedio_pr_as4}
 (prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
 
