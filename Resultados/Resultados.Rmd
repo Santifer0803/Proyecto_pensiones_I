@@ -807,6 +807,16 @@ for (i in 1:(nrow(df.anualidades) - 1)) {
 
 # Se pasa a formato DataTable
 df.anualidades <- setDT(df.anualidades)
+
+# Se obtienen las potencias de los valores presentes, incluyendo el aguinaldo
+potencia.mensual <-
+  rep(seq(1:(95 * 12)), times = ifelse((seq(1:(
+    95 * 12
+  )) %% 12) == 0, 2, 1))
+
+# Se obtiene el valor presente de cada periodo proyectado
+matriz.vp <-
+  matrix(((1 + tasa.mensual) ^ -(potencia.mensual / 12)), ncol = length(potencia.mensual), nrow = nrow(cotizantes), byrow = TRUE)
 ```
 
 ### Probabilidades de muerte para cada edad
@@ -2330,6 +2340,18 @@ rm(qx.conyuge, vect.aleatorio, estados.conyuge, indice.3, qx.hijo, estados.hijo,
 matrices.pension <- list(matriz.vejez.h, matriz.vejez.m, matriz.inv.h, matriz.inv.m, 
                          matriz.suc.h, matriz.suc.m, matriz.vejinv.h, matriz.vejinv.m,
                          matriz.suc.ch, matriz.suc.cm, matriz.suc.hh, matriz.suc.hm)
+
+# Lista para matrices valor presente
+matrices.vp <- list()
+
+# se obtiene la matriz de forma mensualizada en valor presente
+for (i in 1:length(matrices.pension)) {
+  # Se extienden las matrices de forma mensual, considerando el aguinaldo
+  matrices.vp[[i]] <- t(apply(matrices.pension[[i]], 1, function(fila) rep(fila, each = 13)))
+  
+  # Se obtiene el valor presente de cada matriz
+  matrices.vp[[i]] <- matrices.vp[[i]] * matriz.vp[nrow(matrices.vp[[i]]), ]
+}
 
 # Vector que tendrá el monto de las cotizaciones de los pensionados
 cotizacion.pensiones <- rep(0, length(matrices.pension))
