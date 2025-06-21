@@ -978,7 +978,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.001){
+while(abs(prom.despues - prom.antes) >= 0.00001){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2606,7 +2606,7 @@ ggplot(data.rs, aes(x = rs)) +
   annotate(
     "text",
     x = prom.rs,
-    y = 0.5,
+    y = 50,
     label = "Media de las RS",
     color = "#F59A3A",
     angle = 90,
@@ -2659,8 +2659,6 @@ Como se menciona en el reglamento, se procede con la prima media. Inicialmente s
 (prom.pm <- mean(unlist(prima.media)))
 ```
 
-Se observa que este es negativo debido a que la reserva inicial supera al pasivo actuarial.
-
 Un análisis más detallado se observa en el siguiente gráfico:
 
 ```{r grafico_prima_media_base}
@@ -2711,7 +2709,7 @@ ggplot(data.rc, aes(x = rc)) +
   annotate(
     "text",
     x = mean(razon.fondo.cont),
-    y = 2,
+    y = 80,
     label = "Media de la RC",
     color = "#F59A3A",
     angle = 90,
@@ -2725,3 +2723,50 @@ ggplot(data.rc, aes(x = rc)) +
 
 Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
 
+## Tasa de ingresos
+
+La tasa de ingresos se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
+
+```{r promedio_ti_base}
+(prom.ti <- mean(tasa.ingresos, na.rm = TRUE))
+```
+
+Se observan los resultados en un gráfico.
+
+```{r grafico_ti_base}
+# Se crea un dataframe con los datos
+data.ti <- data.frame(ti = tasa.ingresos)
+
+# Gráfico de las razones del fondo de contingencia
+ggplot(data.ti, aes(x = ti)) +
+  geom_density(color = "#A34022", linewidth = 1.2) +
+  geom_vline(
+    xintercept = prom.ti,
+    color = "#F59A3A",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "text",
+    x = prom.ti,
+    y = 4e-04,
+    label = "Media de la TI",
+    color = "#F59A3A",
+    angle = 90,
+    vjust = -0.5,
+    size = 3.5
+  ) +
+  labs(x = "Tasa de ingresos",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
+
+## Prima de reparto
+
+La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
+
+```{r promedio_ti_base}
+(prom.ti <- mean(tasa.ingresos, na.rm = TRUE))
+```
