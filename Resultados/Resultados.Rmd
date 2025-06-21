@@ -810,13 +810,13 @@ df.anualidades <- setDT(df.anualidades)
 
 # Se obtienen las potencias de los valores presentes, incluyendo el aguinaldo
 potencia.mensual <-
-  rep(seq(1:(95 * 12)), times = ifelse((seq(1:(
-    95 * 12
-  )) %% 12) == 0, 2, 1))
+  rep(seq(1:(ncol(edades) * 12)), 
+      times = ifelse((seq(1:(ncol(edades) * 12)) %% 12) == 0, 2, 1))
 
 # Se obtiene el valor presente de cada periodo proyectado
 matriz.vp <-
-  matrix(((1 + tasa.mensual) ^ -(potencia.mensual / 12)), ncol = length(potencia.mensual), nrow = nrow(cotizantes), byrow = TRUE)
+  matrix(((1 + tasa.mensual) ^ -((potencia.mensual - 1) / 12)), nrow(cotizantes), 
+         length(potencia.mensual), byrow = TRUE)
 ```
 
 ### Probabilidades de muerte para cada edad
@@ -2341,36 +2341,32 @@ matrices.pension <- list(matriz.vejez.h, matriz.vejez.m, matriz.inv.h, matriz.in
                          matriz.suc.h, matriz.suc.m, matriz.vejinv.h, matriz.vejinv.m,
                          matriz.suc.ch, matriz.suc.cm, matriz.suc.hh, matriz.suc.hm)
 
-# Lista para matrices valor presente
+# Lista para matrices con los montos valor presente
 matrices.vp <- list()
-
-# se obtiene la matriz de forma mensualizada en valor presente
-for (i in 1:length(matrices.pension)) {
-  # Se extienden las matrices de forma mensual, considerando el aguinaldo
-  matrices.vp[[i]] <- t(apply(matrices.pension[[i]], 1, function(fila) rep(fila, each = 13)))
-  
-  # Se obtiene el valor presente de cada matriz
-  matrices.vp[[i]] <- matrices.vp[[i]] * matriz.vp[nrow(matrices.vp[[i]]), ]
-}
 
 # Vector que tendrá el monto de las cotizaciones de los pensionados
 cotizacion.pensiones <- rep(0, length(matrices.pension))
 
-# Se itera sobre cada matriz para determinar el monto de las cotizaciones en la misma
-for(i in 1:length(matrices.pension)){
+# Se itera sobre las matrices
+for (i in 1:length(matrices.pension)) {
   
-  indices <- which(matrices.pension[[i]] > 2000000, arr.ind = TRUE)[, "col"]
+  # Se extienden las matrices de forma mensual, considerando el aguinaldo
+  matrices.pension[[i]] <- t(apply(matrices.pension[[i]], 1, 
+                                   function(fila) rep(fila, each = 13)))
   
-  mayores.2mill <- matrices.pension[[i]][matrices.pension[[i]] > 2000000]
+  # Se obtiene el valor presente de cada matriz
+  matrices.vp[[i]] <- matrices.pension[[i]] * matriz.vp[1:nrow(matrices.pension[[i]]), ]
   
-  cotizacion.pensiones[i] <- sum(0.05 * mayores.2mill * s[indices])
+  # Se determina la contribución de los pensionados
+  mayores.2mill <- matrices.vp[[i]][matrices.pension[[i]] > 2000000]
+  cotizacion.pensiones[i] <- sum(0.05 * mayores.2mill)
   
 }
 
 # Se suman las cotizaciones de los pensionados de cada matriz
 cotizacion.pensiones <- sum(cotizacion.pensiones)
 
-# Se construye la matriz con los salarios totales para determinas la masa salarial
+# Se construye la matriz con los salarios totales para determinar la masa salarial
 salarios.finales <- rbind(salario.estoc.h * cotizaciones.h / 12, 
                           salario.estoc.m * cotizaciones.m / 12)
 
@@ -2387,7 +2383,7 @@ cotizacion.trab <- masa.salarial * 0.15
 # Se calcula el activo actuarial
 total.activo <- cotizacion.pensiones + cotizacion.trab + reserva.ini
 
-rm(mayores.2mill, indices)
+rm(mayores.2mill)
 
 ### Flujos de balance
 
@@ -2407,7 +2403,7 @@ for(i in 1:ncol(salarios.finales)){
   cotizaciones <- c(cotizaciones, (sum(salarios.finales[, i]) * 0.15))
   
   # Costo de las pensiones
-  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, i])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto administrativo del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -2441,20 +2437,8 @@ annos[3] <- idx + 2024
 
 ### Pasivo actuarial
 
-# Se crea la matriz con las tasas de descuento para cada año para determinar el total de pensiones
-n.filas <- max(sapply(matrices.pension, nrow))
-matriz.descuento <- matrix(rep(s, times = n.filas), nrow = n.filas, byrow = TRUE)
-
-# Iteramos sobre cada matriz
-for(i in 1:length(matrices.pension)){
-  
-  # Traemos el monto de la pensión a valor presente
-  matrices.pension[[i]] <- matrices.pension[[i]] * matriz.descuento[1:nrow(matrices.pension[[i]]), ]
-  
-}
-
 # Se calcula el total de las pensiones
-total.pensiones <- sum(sapply(matrices.pension, sum))
+total.pensiones <- sum(sapply(matrices.vp, sum))
 
 # Se calcula el monto del SEM
 sem <- total.pensiones * (12/13) * 0.085
@@ -2478,21 +2462,21 @@ prom.despues <- mean(unlist(razon.solvencia))
 
 # Beneficio devengado por vejez
 ben.dev.vejez.h <-
-  rowSums(matrices.pension[[1]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.vejez.h] / cuotas.finales.h[filas.vejez.h])
+  rowSums(matrices.vp[[1]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.vejez.h] / cuotas.finales.h[filas.vejez.h])
 ben.dev.vejez.m <-
-  rowSums(matrices.pension[[2]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.vejez.m] / cuotas.finales.m[filas.vejez.m])
+  rowSums(matrices.vp[[2]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.vejez.m] / cuotas.finales.m[filas.vejez.m])
 
 # Beneficio devengado por invalidez
 ben.dev.inv.h <-
-  rowSums(matrices.pension[[3]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.inv.h] / cuotas.finales.h[filas.inv.h])
+  rowSums(matrices.vp[[3]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.inv.h] / cuotas.finales.h[filas.inv.h])
 ben.dev.inv.m <-
-  rowSums(matrices.pension[[4]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.inv.m] / cuotas.finales.m[filas.inv.m])
+  rowSums(matrices.vp[[4]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.inv.m] / cuotas.finales.m[filas.inv.m])
 
 # Beneficio devengado por sucesión
 ben.dev.suc.h <-
-  rowSums(matrices.pension[[5]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.muerte.h] / cuotas.finales.h[filas.muerte.h])
+  rowSums(matrices.vp[[5]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 1)][filas.muerte.h] / cuotas.finales.h[filas.muerte.h])
 ben.dev.suc.m <-
-  rowSums(matrices.pension[[6]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.muerte.m] / cuotas.finales.m[filas.muerte.m])
+  rowSums(matrices.vp[[6]]) * (cotizantes.activos$cotizaciones[which(cotizantes.activos$sexo == 2)][filas.muerte.m] / cuotas.finales.m[filas.muerte.m])
 
 # Se guardan los beneficios devengados en listas
 beneficio.devengado.vejez <- append(beneficio.devengado.vejez, (sum(ben.dev.vejez.h) + sum(ben.dev.vejez.m)))
@@ -2526,7 +2510,7 @@ for(i in 1:ncol(salarios.finales)){
   cotizaciones <- ms * 0.15
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, i])))
+  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
