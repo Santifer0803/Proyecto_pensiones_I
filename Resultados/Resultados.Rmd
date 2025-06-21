@@ -2444,10 +2444,8 @@ for (i in 1:length(matrices.pension)) {
   cotizacion.pensiones[i] <- sum(0.05 * mayores.2mill)
   
   # Se actualiza el monto de las pensiones correspondientes
-  matrices.vp[[i]] <-
-    matrices.vp[[i]][matrices.pension[[i]] > 2000000] * 0.95 + matrices.vp[[i]][matrices.pension[[i]] <= 2000000]
-  matrices.pension[[i]] <-
-    matrices.pension[[i]][matrices.pension[[i]] > 2000000] * 0.95 + matrices.pension[[i]][matrices.pension[[i]] <= 2000000]
+  matrices.vp[[i]] <- matrices.vp[[i]] * ifelse(matrices.pension[[i]] > 2000000, 0.95, 1)
+  matrices.pension[[i]] <- matrices.pension[[i]] * ifelse(matrices.pension[[i]] > 2000000, 0.95, 1)
 }
 
 # Se suman las cotizaciones de los pensionados de cada matriz
@@ -2571,7 +2569,7 @@ beneficio.devengado.invalidez <- append(beneficio.devengado.invalidez, (sum(ben.
 beneficio.devengado.sucesion <- append(beneficio.devengado.sucesion, (sum(ben.dev.suc.h) + sum(ben.dev.suc.m)))
 
 # Se guardan las matrices de pensión
-pensiones <- append(pensiones, matrices.vp)
+pensiones <- append(pensiones, matrices.pension)
 }
 
 end.time <- Sys.time()
@@ -2914,21 +2912,23 @@ matriz.pasivo <- matrix(0, nrow = 6, ncol = length(pensiones))
 # Se obtienen los montos con un ciclo
 for (i in 1:ncol(matriz.pasivo)) {
   matriz.pasivo[, i] <-
-    c((sum(pensiones[[i]][[1]]) + sum(pensiones[[i]][[2]])),
-      (sum(pensiones[[i]][[3]]) + sum(pensiones[[i]][[4]])),
-      (sum(pensiones[[i]][[5]]) + sum(pensiones[[i]][[6]])),
-      (sum(pensiones[[i]][[7]]) + sum(pensiones[[i]][[8]])),
-      (sum(pensiones[[i]][[9]]) + sum(pensiones[[i]][[10]])),
-      (sum(pensiones[[i]][[11]]) + sum(pensiones[[i]][[12]])))
+    c((sum(pensiones[[i]][[1]] * matriz.vp) + sum(pensiones[[i]][[2]] * matriz.vp)),
+      (sum(pensiones[[i]][[3]] * matriz.vp) + sum(pensiones[[i]][[4]] * matriz.vp)),
+      (sum(pensiones[[i]][[5]] * matriz.vp) + sum(pensiones[[i]][[6]] * matriz.vp)),
+      (sum(pensiones[[i]][[7]] * matriz.vp) + sum(pensiones[[i]][[8]] * matriz.vp)),
+      (sum(pensiones[[i]][[9]] * matriz.vp) + sum(pensiones[[i]][[10]] * matriz.vp)),
+      (sum(pensiones[[i]][[11]] * matriz.vp) + sum(pensiones[[i]][[12]] * matriz.vp)))
 }
 
 # Se pone la información en un dataframe
-(df.pasivo <-
-  data.frame(
-    "Generación actual" = c(rowSums(matriz.pasivo)[1:3], sum(rowSums(matriz.pasivo)[1:3])),
-    "Generación pensionada" = c(rowSums(matriz.pasivo)[4:6], sum(rowSums(matriz.pasivo)[4:6])),
-    row.names = c("Vejez", "Invalidez", "Sucesion", "Total")
-  ))
+(
+  df.pasivo <-
+    data.frame(
+      "Generación actual" = c(rowSums(matriz.pasivo)[1:3], sum(rowSums(matriz.pasivo)[1:3])),
+      "Generación pensionada" = c(rowSums(matriz.pasivo)[4:6], sum(rowSums(matriz.pasivo)[4:6])),
+      row.names = c("Vejez", "Invalidez", "Sucesion", "Total")
+    )
+)
 ```
 
 
