@@ -6635,7 +6635,7 @@ ggplot(data.pm, aes(x = pm)) +
   annotate(
     "text",
     x = prom.pm,
-    y = 20,
+    y = 10,
     label = "Promedio de la prima media",
     color = "#F59A3A",
     angle = 90,
@@ -6667,7 +6667,7 @@ ggplot(data.rc, aes(x = rc)) +
   annotate(
     "text",
     x = mean(razon.fondo.cont),
-    y = 50,
+    y = 100,
     label = "Media de la RC",
     color = "#F59A3A",
     angle = 90,
@@ -6707,7 +6707,7 @@ ggplot(data.ti, aes(x = ti)) +
   annotate(
     "text",
     x = prom.ti,
-    y = 0.01,
+    y = 0.002,
     label = "Media de la TI",
     color = "#F59A3A",
     angle = 90,
