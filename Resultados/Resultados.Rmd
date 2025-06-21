@@ -12754,8 +12754,8 @@ En este caso, se aumentarán todas las edades de retiro en un año. Estas sería
 
 ```{r retiro_anticipado_as4}
 # Se modifican las probabilidades de postergación fijas, de forma que empiece en 65 años para las mujeres también
-df.probabilidad.postergacion.h <- ifelse(edades.h > 65, 0.1, 0)
-df.probabilidad.postergacion.m <- ifelse(edades.m > 65, 0.1, 0)
+df.probabilidad.postergacion.h <- ifelse(edades.h > 69, 0.1, 0)
+df.probabilidad.postergacion.m <- ifelse(edades.m > 69, 0.1, 0)
 ```
 
 Posteriormente, se tiene un modelo idéntico. Iniciamos con las listas.
@@ -12849,13 +12849,13 @@ estados.h <-
          ifelse(
            lista.estados.h[[1]] == 1,
            "Invalido",
-           ifelse(((postergacion.simulada.h == 1) * (cotizaciones.acum.h > 179) * (edades.h > 65)
+           ifelse(((postergacion.simulada.h == 1) * (cotizaciones.acum.h > 179) * (edades.h > 69)
            ) == 1,
            "Posterga",
-           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 65)
+           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 69)
            ) == 0) * (actividad.h == 1)) == 1,
            "Activo",
-           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 65)
+           ifelse(((((cotizaciones.acum.h > 179) * (edades.h > 69)
            ) == 0) * (actividad.h == 0)) == 1, "Inactivo", ifelse(
              edades.h > 64,
              "Retirado",
@@ -12869,20 +12869,20 @@ estados.m <-
          ifelse(
            lista.estados.m[[1]] == 1,
            "Invalido",
-           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 404) * (edades.m == 64)
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 404) * (edades.m == 68)
            ) == 1,
            "Posterga",
-           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 356) * (edades.m == 65)
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 356) * (edades.m == 69)
            ) == 1,
            "Posterga",
-           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 179) * (edades.m > 65)
+           ifelse(((postergacion.simulada.m == 1) * (cotizaciones.acum.m > 179) * (edades.m > 69)
            ) == 1,
            "Posterga",
            ifelse(
-             ((edades.m == 64) * (cotizaciones.acum.m > 404)) == 1,
+             ((edades.m == 68) * (cotizaciones.acum.m > 404)) == 1,
              "Retirado",
-             ifelse(((edades.m == 65) * (cotizaciones.acum.m > 356)
-             ) == 1, "Retirado", ifelse(((edades.m > 65) * (cotizaciones.acum.m > 179)) == 1,
+             ifelse(((edades.m == 69) * (cotizaciones.acum.m > 356)
+             ) == 1, "Retirado", ifelse(((edades.m > 69) * (cotizaciones.acum.m > 179)) == 1,
                                         "Retirado",
                                         ifelse(actividad.m == 1, "Activo", "Inactivo")
              ))
