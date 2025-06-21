@@ -8627,7 +8627,7 @@ ggplot(data.pm, aes(x = pm)) +
   annotate(
     "text",
     x = prom.pm,
-    y = 10,
+    y = 20,
     label = "Promedio de la prima media",
     color = "#F59A3A",
     angle = 90,
