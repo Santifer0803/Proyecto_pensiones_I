@@ -764,7 +764,7 @@ interes.real <- 0.0738
 tasa.mensual <- (1 + interes.real)^(1/12) - 1
 
 # Se crea el vector con las tasas de descuento
-s <- 1 / ((1 + interes.real)^(0:(ncol(matriz.salarios) - 1)))
+s <- 1 / ((1 + interes.real)^(1:ncol(matriz.salarios)))
 
 # DataFrames para probabilidades de sobrevivencia acumuladas
 sobrevivencia.h <- matrix(0, nrow = nrow(edades.h), ncol = ncol(edades.h))
@@ -2367,8 +2367,8 @@ for (i in 1:length(matrices.pension)) {
 cotizacion.pensiones <- sum(cotizacion.pensiones)
 
 # Se construye la matriz con los salarios totales para determinar la masa salarial
-salarios.finales <- rbind(salario.estoc.h * cotizaciones.h / 12, 
-                          salario.estoc.m * cotizaciones.m / 12)
+salarios.finales <- rbind(salario.estoc.h * cotizaciones.h, 
+                          salario.estoc.m * cotizaciones.m)
 
 # Se crea la matriz con los factores de descuento para determinar las cotizaciones de los trabajadores
 matriz.descuento <- matrix(rep(s, times = nrow(salarios.finales)), 
