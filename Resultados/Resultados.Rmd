@@ -2443,6 +2443,11 @@ for (i in 1:length(matrices.pension)) {
   mayores.2mill <- matrices.vp[[i]][matrices.pension[[i]] > 2000000]
   cotizacion.pensiones[i] <- sum(0.05 * mayores.2mill)
   
+  # Se actualiza el monto de las pensiones correspondientes
+  matrices.vp[[i]] <-
+    matrices.vp[[i]][matrices.pension[[i]] > 2000000] * 0.95 + matrices.vp[[i]][matrices.pension[[i]] <= 2000000]
+  matrices.pension[[i]] <-
+    matrices.pension[[i]][matrices.pension[[i]] > 2000000] * 0.95 + matrices.pension[[i]][matrices.pension[[i]] <= 2000000]
 }
 
 # Se suman las cotizaciones de los pensionados de cada matriz
