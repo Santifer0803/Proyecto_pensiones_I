@@ -14,6 +14,7 @@ Inicialmente, cargamos las librerías necesarias para el desarrollo del modelo.
 ```{r librerias, message = FALSE, warning = FALSE}
 pacman::p_load(data.table,
                janitor,
+               knitr,
                purrr,
                readxl,
                tidyverse,
@@ -981,6 +982,7 @@ prima.media <- list()
 beneficio.devengado.vejez <- list()
 beneficio.devengado.invalidez <- list()
 beneficio.devengado.sucesion <- list()
+pensiones <- list()
 
 # Inicializamos los promedios para asegurarnos de que se harán mínimo 2 iteraciones
 prom.antes <- 0
@@ -2562,6 +2564,9 @@ ben.dev.suc.m <-
 beneficio.devengado.vejez <- append(beneficio.devengado.vejez, (sum(ben.dev.vejez.h) + sum(ben.dev.vejez.m)))
 beneficio.devengado.invalidez <- append(beneficio.devengado.invalidez, (sum(ben.dev.inv.h) + sum(ben.dev.inv.m)))
 beneficio.devengado.sucesion <- append(beneficio.devengado.sucesion, (sum(ben.dev.suc.h) + sum(ben.dev.suc.m)))
+
+# Se guardan las matrices de pensión
+pensiones <- append(pensiones, matrices.vp)
 }
 
 end.time <- Sys.time()
@@ -2714,7 +2719,7 @@ Los anteriores están ordenados en primer, segundo y tercer año crítico respec
 
 Para el caso en estudio, usualmente solo se llega al primer año crítico entre las iteraciones, por lo que se grafica ese caso.
 
-```{r grafico_annos_criticos_base, message = FALSE, warning = FALSE}
+```{r grafico_annos_criticos_base}
 # Se guardan los primeros años críticos en un DataFrame
 df.annos.crit <- data.frame(primer_momento = annos.crit.mat[1, ])
 
@@ -2894,6 +2899,33 @@ matriz.balance <- do.call(cbind, balance)
 # Promedio del activo y del pasivo respectivamente
 rowMeans(matriz.balance)
 ```
+
+Seguidamente, como pide el reglamento, se muestra el pasivo separado por generaciones y por razón de salida.
+
+```{r pasivo_separado_base}
+# Se defina una matriz para obtener los montos
+matriz.pasivo <- matrix(0, nrow = 6, ncol = length(pensiones))
+
+# Se obtienen los montos con un ciclo
+for (i in 1:ncol(matriz.pasivo)) {
+  matriz.pasivo[, i] <-
+    c((sum(pensiones[[i]][[1]]) + sum(pensiones[[i]][[2]])),
+      (sum(pensiones[[i]][[3]]) + sum(pensiones[[i]][[4]])),
+      (sum(pensiones[[i]][[5]]) + sum(pensiones[[i]][[6]])),
+      (sum(pensiones[[i]][[7]]) + sum(pensiones[[i]][[8]])),
+      (sum(pensiones[[i]][[9]]) + sum(pensiones[[i]][[10]])),
+      (sum(pensiones[[i]][[11]]) + sum(pensiones[[i]][[12]])))
+}
+
+# Se pone la información en un dataframe
+(df.pasivo <-
+  data.frame(
+    "Generación actual" = c(rowSums(matriz.pasivo)[1:3], sum(rowSums(matriz.pasivo)[1:3])),
+    "Generación pensionada" = c(rowSums(matriz.pasivo)[4:6], sum(rowSums(matriz.pasivo)[4:6])),
+    row.names = c("Vejez", "Invalidez", "Sucesion", "Total")
+  ))
+```
+
 
 Lo anterior se muestra en el siguiente gráfico.
 
