@@ -12750,7 +12750,7 @@ estos se muestran por separado, tal y como menciona el reglamento. Esto represen
 
 # Aumento en la edad de retiro
 
-En este caso, se aumentarán todas las edades de retiro en un año. Estas serían la edad de retiro por vejez y las edades de retiro anticipado de las mujeres
+En este caso, se aumentarán todas las edades de retiro en 5 años. Estas serían la edad de retiro por vejez y las edades de retiro anticipado de las mujeres
 
 ```{r retiro_anticipado_as4}
 # Se modifican las probabilidades de postergación fijas, de forma que empiece en 65 años para las mujeres también
