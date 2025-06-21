@@ -4733,7 +4733,7 @@ Una vez más, se aprecia que la reserva es muy grande en comparación con los eg
 
 La tasa de ingresos se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
-```{r promedio_pr_pesimista}
+```{r promedio_ti_pesimista}
 (prom.ti <- mean(tasa.ingresos, na.rm = TRUE))
 ```
 
