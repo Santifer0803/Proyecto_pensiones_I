@@ -764,7 +764,7 @@ interes.real <- 0.0738
 tasa.mensual <- (1 + interes.real)^(1/12) - 1
 
 # Se crea el vector con las tasas de descuento
-s <- 1 / ((1 + interes.real)^(1:ncol(matriz.salarios)))
+s <- 1 / ((1 + interes.real)^(0:(ncol(matriz.salarios) - 1)))
 
 # DataFrames para probabilidades de sobrevivencia acumuladas
 sobrevivencia.h <- matrix(0, nrow = nrow(edades.h), ncol = ncol(edades.h))
@@ -2677,8 +2677,8 @@ ggplot(data.pm, aes(x = pm)) +
   annotate(
     "text",
     x = prom.pm,
-    y = 2,
-    label = "Media de la prima media",
+    y = 20,
+    label = "Promedio de la prima media",
     color = "#F59A3A",
     angle = 90,
     vjust = -0.5,
@@ -2749,7 +2749,7 @@ ggplot(data.ti, aes(x = ti)) +
   annotate(
     "text",
     x = prom.ti,
-    y = 4e-04,
+    y = 0.0025,
     label = "Media de la TI",
     color = "#F59A3A",
     angle = 90,
@@ -2768,5 +2768,94 @@ Los primeros valores están entre 10 y 20, lo cual condiciona mucho el gráfico.
 La prima de reparto se calcula siempre que la masa salarial sea mayor a 0. Por lo que se quitan los nulos en el promedio:
 
 ```{r promedio_ti_base}
-(prom.ti <- mean(tasa.ingresos, na.rm = TRUE))
+(prom.pr <- mean(prima.reparto, na.rm = TRUE))
 ```
+
+Se observa el comportamiento en un gráfico.
+
+```{r grafico_pr_base}
+# Se crea un dataframe con los datos
+data.pr <- data.frame(pr = prima.reparto)
+
+# Gráfico de las razones del fondo de contingencia
+ggplot(data.pr, aes(x = pr)) +
+  geom_density(color = "#A34022", linewidth = 1.2) +
+  geom_vline(
+    xintercept = prom.pr,
+    color = "#F59A3A",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "text",
+    x = prom.pr,
+    y = 0.04,
+    label = "Media de la prima de reparto",
+    color = "#F59A3A",
+    angle = 90,
+    vjust = -0.5,
+    size = 3.5
+  ) +
+  labs(x = "Prima de reparto",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+Se observa que muchos de los valores son menores a 1. Incluso, más del $75\%$ tienen menos de 2 dígitos.
+
+## Balance
+
+El promedio del activo y del pasivo a lo largo de las iteraciones se muestra a continuación.
+
+```{r prom_balance_base}
+# Se obtienen los valores en una matriz
+matriz.balance <- do.call(cbind, balance)
+
+# Promedio del activo y del pasivo respectivamente
+rowMeans(matriz.balance)
+```
+
+Lo anterior se muestra en el siguiente gráfico.
+
+```{r grafico_balance_base}
+# Se pone la información en un dataframe
+df.balance <- data.frame(valor = rowMeans(matriz.balance),
+                         categoria = c("Activo", "Pasivo"))
+
+# Gráfico del balance
+ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
+  geom_bar(stat = "identity", fill = "#A34022") +
+  labs(x = "Categoría del balance", y = "Valor (Miles de millones de colones)") +
+  theme_minimal()
+```
+
+
+estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+
+## Beneficio devengado
+
+En este caso, se observa el promedio del beneficio devengado en el siguiente gráfico
+
+```{r promedio_beneficio_devengado}
+# Se obtienen los valores en un dataframe
+beneficio.devengado.final <-
+  data.frame(
+    ben.dev = c(mean(unlist(
+      beneficio.devengado.vejez
+    )), mean(unlist(
+      beneficio.devengado.invalidez
+    )), mean(unlist(
+      beneficio.devengado.sucesion
+    ))),
+    categoria = c("Vejez", "Invalidez", "Sucesión")
+  )
+
+# Gráfico de beneficios devengados
+ggplot(beneficio.devengado.final, aes(x = categoria, y = (ben.dev / 1000000000))) +
+  geom_bar(stat = "identity", fill = "#A34022") +
+    labs(x = "Categoría del devengo", y = "Valor (Miles de millones de colones)") +
+  theme_minimal()
+```
+
+
+
