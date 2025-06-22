@@ -4759,27 +4759,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
@@ -6686,27 +6678,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
@@ -8670,27 +8654,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
@@ -10639,27 +10615,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
@@ -12604,27 +12572,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
@@ -14518,27 +14478,19 @@ Se observa el comportamiento en un gráfico.
 # Se crea un dataframe con los datos
 data.pr <- data.frame(pr = prima.reparto)
 
+# Se quitan los nulos
+data.pr <- as.data.frame(data.pr$pr[which(!is.na(data.pr$pr))])
+
+# Se agrega el índice
+data.pr$indice <- 1:nrow(data.pr)
+
+# Se cambia el nombre de la columna
+colnames(data.pr) <- c("pr", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.pr, aes(x = pr)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.pr,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.pr,
-    y = 0.04,
-    label = "Media de la prima de reparto",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Prima de reparto",
-       y = "Densidad") +
+ggplot(data.pr, aes(x = id, y = pr)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Prima de reparto") +
   theme_minimal()
 ```
 
