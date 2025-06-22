@@ -6515,7 +6515,7 @@ ggplot(data.rs, aes(x = rs)) +
   annotate(
     "text",
     x = prom.rs,
-    y = 300,
+    y = 200,
     label = "Media de las RS",
     color = "#F59A3A",
     angle = 90,
@@ -6586,7 +6586,7 @@ ggplot(data.pm, aes(x = pm)) +
   annotate(
     "text",
     x = prom.pm,
-    y = 50,
+    y = 10,
     label = "Promedio de la prima media",
     color = "#F59A3A",
     angle = 90,
@@ -10452,7 +10452,7 @@ ggplot(data.rs, aes(x = rs)) +
   annotate(
     "text",
     x = prom.rs,
-    y = 50,
+    y = 10,
     label = "Media de las RS",
     color = "#F59A3A",
     angle = 90,
