@@ -4727,27 +4727,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.01,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
@@ -6662,27 +6654,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.002,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
@@ -8654,27 +8638,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.002,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
@@ -10631,27 +10607,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.002,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
@@ -12604,27 +12572,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.002,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
@@ -14526,27 +14486,19 @@ Se observan los resultados en un gráfico.
 # Se crea un dataframe con los datos
 data.ti <- data.frame(ti = tasa.ingresos)
 
+# Se quitan los nulos
+data.ti <- as.data.frame(data.ti$ti[which(!is.na(data.ti$ti))])
+
+# Se agrega el índice
+data.ti$indice <- 1:nrow(data.ti)
+
+# Se cambia el nombre de la columna
+colnames(data.ti) <- c("ti", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.ti, aes(x = ti)) +
-  geom_density(color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = prom.ti,
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = prom.ti,
-    y = 0.002,
-    label = "Media de la TI",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Tasa de ingresos",
-       y = "Densidad") +
+ggplot(data.ti, aes(x = id, y = ti)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Tasa de ingresos") +
   theme_minimal()
 ```
 
