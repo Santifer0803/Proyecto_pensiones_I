@@ -12659,7 +12659,7 @@ En este caso, se aumentarán todas las edades de retiro en 5 años. Estas sería
 ```{r retiro_anticipado_as4}
 # Se modifican las probabilidades de postergación fijas, de forma que empiece en 65 años para las mujeres también
 df.probabilidad.postergacion.h <- ifelse(edades.h > 69, 0.1, 0)
-df.probabilidad.postergacion.m <- ifelse(edades.m > 69, 0.1, 0)
+df.probabilidad.postergacion.m <- ifelse(edades.m > 67, 0.1, 0)
 ```
 
 Posteriormente, se tiene un modelo idéntico. Iniciamos con las listas.
