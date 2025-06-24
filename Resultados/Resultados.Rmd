@@ -764,9 +764,6 @@ interes.real <- ((0.1376-0.04) / 1.04) - 0.02
 
 tasa.mensual <- (1 + interes.real)^(1/12) - 1
 
-# Se crea el vector con las tasas de descuento
-s <- 1 / ((1 + interes.real)^(0:(ncol(matriz.salarios) - 1)))
-
 # Se obtienen las potencias de los valores presentes, incluyendo el aguinaldo
 potencia.mensual <-
   rep(seq(1:(ncol(edades) * 12)), 
@@ -774,7 +771,14 @@ potencia.mensual <-
 
 # Se obtiene el valor presente de cada periodo proyectado
 matriz.vp <-
-  matrix(((1 + tasa.mensual) ^ -((potencia.mensual - 1) / 12)), nrow(cotizantes), 
+  matrix(((1 + tasa.mensual) ^ -((potencia.mensual - 1))), nrow(cotizantes), 
+         length(potencia.mensual), byrow = TRUE)
+
+potencia.mensual <-
+  rep(seq(1:(ncol(edades) * 12)))
+
+matriz.vp.salarios <- 
+  matrix(((1 + tasa.mensual) ^ -((potencia.mensual - 1))), nrow(cotizantes), 
          length(potencia.mensual), byrow = TRUE)
 ```
 
@@ -952,7 +956,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base, echo = FALSE}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.001){
+while(abs(prom.despues - prom.antes) >= 0.0001){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2409,15 +2413,11 @@ for (i in 1:length(matrices.pension)) {
 cotizacion.pensiones <- sum(cotizacion.pensiones)
 
 # Se construye la matriz con los salarios totales para determinar la masa salarial
-salarios.finales <- rbind(salario.estoc.h * cotizaciones.h, 
-                          salario.estoc.m * cotizaciones.m)
-
-# Se crea la matriz con los factores de descuento para determinar las cotizaciones de los trabajadores
-matriz.descuento <- matrix(rep(s, times = nrow(salarios.finales)), 
-                           nrow(salarios.finales), byrow = TRUE)
+salarios.finales <- rbind(salarios.aux.h, 
+                          salarios.aux.m)
 
 # Se calcula la masa salarial
-masa.salarial <- sum(salarios.finales * matriz.descuento)
+masa.salarial <- sum(salarios.finales * matriz.vp.salarios)
 
 # Se calcula la contribución de los trabajadores
 cotizacion.trab <- masa.salarial * 0.15
@@ -2439,10 +2439,19 @@ rends <- c()
 annos <- c(0, 0, 0)
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- c(cotizaciones, (sum(salarios.finales[, i]) * 0.15))
+  cot.trab <- sum(salarios.finales[, (12*i - 11):(12*i)]) * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- c(cotizaciones, (cot.trab + cot.pens))
   
   # Costo de las pensiones
   costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
@@ -2451,7 +2460,7 @@ for(i in 1:ncol(salarios.finales)){
   sem <- costo.pens * (12/13) * 0.085
   
   # Total de egresos
-  total.egresos <- c(total.egresos, costo.pens + sem)
+  total.egresos <- c(total.egresos, (costo.pens + sem))
   
   # Rendimientos
   rends <- c(rends, ifelse((reserva[i] + (cotizaciones[i] - total.egresos[i]) / 2) * interes.real > 0, 
@@ -2461,7 +2470,7 @@ for(i in 1:ncol(salarios.finales)){
   total.ingresos <- cotizaciones[i] + rends[i]
   
   # Guardamos la reserva final (reserva inicial del siguiente año)
-  reserva <- c(reserva, (reserva[i] + total.ingresos - total.egresos[i] + sem))
+  reserva <- c(reserva, (reserva[i] + total.ingresos - total.egresos[i]))
 }
 
 # Eliminamos la última reserva final
@@ -2546,16 +2555,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
