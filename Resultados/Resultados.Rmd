@@ -952,7 +952,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base, echo = FALSE}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.00001){
+while(abs(prom.despues - prom.antes) >= 0.001){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -1211,7 +1211,6 @@ salarios.top.m <- t(apply(salarios.top.m, 1, function(fila) {
 # Beneficio por vejez, separado por sexo
 beneficio.vejez.h <-
   (pmin(300, cuotas.finales.h[which(salida.h == "Retirado")]) / 300) * (rowSums(salarios.top.h[which(salida.h == "Retirado"),]) / rowSums(salarios.top.h[which(salida.h == "Retirado"),] > 9999))
-# Hacer la corrección a estados M, en donde las mujeres pueden retirarse a partir de los 63 si cumplen los requisitos
 beneficio.vejez.m <-
   (pmin(300, cuotas.finales.m[which(salida.m == "Retirado")]) / 300) * (rowSums(salarios.top.m[which(salida.m == "Retirado"),]) / rowSums(salarios.top.m[which(salida.m == "Retirado"),] > 9999))
 
