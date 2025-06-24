@@ -956,7 +956,7 @@ Con esto, se procede con el modelo en sí.
 ```{r estocastico_base, echo = FALSE}
 start.time <- Sys.time()
 
-while(abs(prom.despues - prom.antes) >= 0.00001){
+while(abs(prom.despues - prom.antes) >= 0.001){
   
 # Se crean dos matrices aleatorias usando distribución Uniforme(0, 1)
 matriz.aleatoria.h <- matrix(runif(nrow(cotizantes.h) * ncol(mort.h)), 
@@ -2403,10 +2403,6 @@ for (i in 1:length(matrices.pension)) {
   # Se determina la contribución de los pensionados
   mayores.2mill <- matrices.vp[[i]][matrices.pension[[i]] > 2000000]
   cotizacion.pensiones[i] <- sum(0.05 * mayores.2mill)
-  
-  # Se actualiza el monto de las pensiones correspondientes
-  matrices.vp[[i]] <- matrices.vp[[i]] * ifelse(matrices.pension[[i]] > 2000000, 0.95, 1)
-  matrices.pension[[i]] <- matrices.pension[[i]] * ifelse(matrices.pension[[i]] > 2000000, 0.95, 1)
 }
 
 # Se suman las cotizaciones de los pensionados de cada matriz
@@ -2548,8 +2544,19 @@ end.time - start.time
 Una vez el modelo haya terminado de hacer las iteraciones, se procede a determinar la tasa de ingresos, la prima de reparto y la razón de fondo de contingencias, usando las variables de la última iteración.
 
 ```{r metricas_base}
-# Inicializamos la reserva inicial en el 2025 y los vectores para las métricas
-reserva <- reserva.ini
+# Inicializamos la reserva inicial en el 2025 y los vectores del flujo
+reserva <- c(reserva.ini)
+salarios <- c()
+cotizaciones <- c()
+costo.vejez <- c()
+costo.inv <- c()
+costo.suc <- c()
+sem <- c()
+total.egresos <- c()
+rends <- c()
+total.ingresos <- c()
+
+# Inicializamos los vectores para las métricas
 tasa.ingresos <- c()
 prima.reparto <- c()
 razon.fondo.cont <- c()
@@ -2558,10 +2565,10 @@ razon.fondo.cont <- c()
 for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
+  salarios <- c(salarios, sum(salarios.finales[, (12*i - 11):(12*i)]))
   
   # Cotizaciones de los trabajadores
-  cot.trab <- ms * 0.15
+  cot.trab <- salarios[i] * 0.15
   
   # Cotizaciones de los pensionados
   cot.pens <- Reduce("+", sapply(matrices.pension, 
@@ -2570,33 +2577,84 @@ for(i in 1:ncol(edades)){
   cot.pens <- 0.05 * cot.pens
   
   # Cotizaciones totales
-  cotizaciones <- cot.trab + cot.pens
+  cotizaciones <- c(cotizaciones, (cot.trab + cot.pens))
   
-  # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  # Costo de las pensiones por vejez
+  vejez <- Reduce("+", sapply(matrices.pension[1:2], function(mat) sum(mat[, (13*i - 12):(13*i)]))) +
+    Reduce("+", sapply(matrices.pension[7:8], function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  
+  costo.vejez <- c(costo.vejez, vejez)
+  
+  # Costo de las pensiones por invalidez
+  inv <- Reduce("+", sapply(matrices.pension[3:4], function(mat) sum(mat[, (13*i - 12):(13*i)]))) + 
+    Reduce("+", sapply(matrices.pension[9:10], function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  
+  costo.inv <- c(costo.inv, inv)
+  
+  # Costo de las pensiones por sucesión
+  suc <- Reduce("+", sapply(matrices.pension[5:6], function(mat) sum(mat[, (13*i - 12):(13*i)]))) + 
+    Reduce("+", sapply(matrices.pension[11:12], function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  
+  costo.suc <- c(costo.suc, suc)
+  
+  # Costo total de las pensiones
+  costo.pens <- costo.vejez[i] + costo.inv[i] + costo.suc[i]
   
   # Gasto del SEM
-  sem <- costo.pens * (12/13) * 0.085
+  sem <- c(sem, costo.pens * (12/13) * 0.085)
   
   # Egresos totales
-  total.egresos <- costo.pens + sem
+  total.egresos <- c(total.egresos, (costo.pens + sem[i]))
   
   # Rendimientos
-  rends <- ifelse((reserva + (cotizaciones - total.egresos) / 2) * interes.real > 0, 
-                  (reserva + (cotizaciones - total.egresos) / 2) * interes.real, 0)
+  rends <- c(rends, ifelse((reserva[i] + (cotizaciones[i] - total.egresos[i]) / 2) * interes.real > 0, 
+                           (reserva[i] + (cotizaciones[i] - total.egresos[i]) / 2) * interes.real, 0))
   
   # Ingresos totales
-  total.ingresos <- cotizaciones + rends
+  total.ingresos <- c(total.ingresos, (cotizaciones[i] + rends[i]))
   
   # Guardamos las métricas
-  tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
-  prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  tasa.ingresos <- c(tasa.ingresos, 
+                     ifelse(salarios[i] > 0, (total.ingresos[i] / salarios[i]), NA))
+  
+  prima.reparto <- c(prima.reparto, 
+                     ifelse(salarios[i] > 0, (total.egresos[i] / salarios[i]), NA))
+  
+  razon.fondo.cont <- c(razon.fondo.cont, 
+                        ifelse(total.egresos[i] > 0, (reserva[i] / total.egresos[i]), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
-  
+  reserva <- c(reserva, (reserva[i] + total.ingresos[i] - total.egresos[i]))
 }
+
+# DataFrame con el flujo
+flujo <- data.frame(
+  
+  anno = ((1:ncol(edades)) + 2024),
+  
+  reserva.ini = reserva[1:(length(reserva) - 1)] / 1000000,
+  
+  salarios = salarios / 1000000,
+  
+  cotizaciones = cotizaciones / 1000000,
+  
+  rendimientos = rends / 1000000,
+  
+  total.ingresos = total.ingresos / 1000000,
+  
+  costo.vejez = costo.vejez / 1000000,
+  
+  costo.inv = costo.inv / 1000000,
+  
+  costo.suc = costo.suc / 1000000,
+  
+  gasto.sem = sem / 1000000,
+  
+  total.egresos = total.egresos / 1000000,
+  
+  reserva.fin = reserva[2:length(reserva)] / 1000000
+  
+)
 ```
 
 # Resultados base
@@ -2640,7 +2698,7 @@ ggplot(curva.general, aes(x = proyeccion.edad, y = salario.promedio)) +
 Seguidamente se realiza un ejemplo donde se recibe el ID y la función imprime su curva salarial para su análisis.
 
 ```{r grafico_funcion_proyectar_persona}
-graficar.proyeccion.id("097434")
+graficar.proyeccion.id("003376")
 ```
 
 ## Razón de solvencia
