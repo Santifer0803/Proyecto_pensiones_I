@@ -4583,16 +4583,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -6535,16 +6544,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -8544,16 +8562,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -10538,16 +10565,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -12528,16 +12564,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
@@ -14467,16 +14512,25 @@ prima.reparto <- c()
 razon.fondo.cont <- c()
 
 # Iteramos sobre cada año
-for(i in 1:ncol(salarios.finales)){
+for(i in 1:ncol(edades)){
   
   # Masa salarial
-  ms <- sum(salarios.finales[, i])
+  ms <- sum(salarios.finales[, (12*i - 11):(12*i)])
   
   # Cotizaciones de los trabajadores
-  cotizaciones <- ms * 0.15
+  cot.trab <- ms * 0.15
+  
+  # Cotizaciones de los pensionados
+  cot.pens <- Reduce("+", sapply(matrices.pension, 
+                     function(mat) sum(mat[, (13*i - 12):(13*i)][mat[, (13*i - 12):(13*i)] > 2000000])))
+  
+  cot.pens <- 0.05 * cot.pens
+  
+  # Cotizaciones totales
+  cotizaciones <- cot.trab + cot.pens
   
   # Costo de las pensiones en cada año
-  costo.pens <- Reduce("+", lapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
+  costo.pens <- Reduce("+", sapply(matrices.pension, function(mat) sum(mat[, (13*i - 12):(13*i)])))
   
   # Gasto del SEM
   sem <- costo.pens * (12/13) * 0.085
