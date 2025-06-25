@@ -2766,7 +2766,7 @@ ggplot(df.proyeccion.demografica, aes(x = annos)) +
   scale_color_manual(
     name = "Estado",
     values = c(
-      "Activos" = "#A34022",
+      "Activos" = "#2E7D32",
       "Inactivos" = "#F59A3A",
       "Pensionados" = "#DC3440"
     )
@@ -2774,7 +2774,6 @@ ggplot(df.proyeccion.demografica, aes(x = annos)) +
   labs(x = "Años", y = "Cantidad de personas") +
   theme_minimal()
 ```
-
 
 ## Salarios base
 
@@ -2883,7 +2882,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") +
 theme_minimal()
 ```
 
@@ -2934,32 +2933,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -2984,7 +2974,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -3016,7 +3006,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -3069,7 +3059,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_base}
@@ -3084,8 +3073,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 ## Beneficio devengado
 
@@ -3129,7 +3117,6 @@ ggplot(beneficio.devengado.final, aes(x = categoria, y = (ben.dev / 1000000000))
 # Razón de solvencia devengada
 rowMeans(matriz.balance)[1] / sum(beneficio.devengado.final[, 1])
 ```
-
 
 # Caso pesimista
 
@@ -4819,10 +4806,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -4897,7 +4884,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") + 
 theme_minimal()
 ```
 
@@ -4948,32 +4935,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -4998,7 +4976,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -5030,7 +5008,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -5083,7 +5061,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_pesimista}
@@ -5098,8 +5075,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 # Caso optimista
 
@@ -6789,10 +6765,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -6867,7 +6843,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") + 
 theme_minimal()
 ```
 
@@ -6918,32 +6894,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -6968,7 +6935,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -7000,7 +6967,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -7053,7 +7020,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_optimista}
@@ -7068,8 +7034,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 # Análisis de sensibilidad
 
@@ -8816,10 +8781,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -8894,7 +8859,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") +
 theme_minimal()
 ```
 
@@ -8945,32 +8910,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -8995,7 +8951,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -9027,7 +8983,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -9080,7 +9036,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_as1}
@@ -9095,8 +9050,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 ## Decremento en las tasas de mortalidad
 
@@ -10819,10 +10773,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -10897,7 +10851,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") +
 theme_minimal()
 ```
 
@@ -10948,32 +10902,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -10998,7 +10943,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -11030,7 +10975,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -11083,7 +11028,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_as2}
@@ -11098,8 +11042,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 # Eliminación del retiro anticipado
 
@@ -12818,10 +12761,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -12896,7 +12839,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") +
 theme_minimal()
 ```
 
@@ -12947,32 +12890,23 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
-Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy cercanos a 0 para esta métrica.
+Una vez más, se aprecia que la reserva es muy grande en comparación con los egresos, lo cual produce resultados muy grandes para esta métrica.
 
 ## Tasa de ingresos
 
@@ -12997,7 +12931,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -13029,7 +12963,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -13082,7 +13016,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_as3}
@@ -13097,8 +13030,7 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
-
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
 # Aumento en la edad de retiro
 
@@ -14766,10 +14698,10 @@ for(i in 1:ncol(edades)){
   # Guardamos las métricas
   tasa.ingresos <- c(tasa.ingresos, ifelse(ms > 0, (total.ingresos / ms), NA))
   prima.reparto <- c(prima.reparto, ifelse(ms > 0, (total.egresos / ms), NA))
-  razon.fondo.cont <- c(razon.fondo.cont, total.egresos / reserva)
+  razon.fondo.cont <- c(razon.fondo.cont, ifelse(total.egresos > 0, (reserva / total.egresos), NA))
   
   # Actualizamos la reserva inicial para el siguiente año
-  reserva <- reserva + total.ingresos - total.egresos + sem
+  reserva <- reserva + total.ingresos - total.egresos
   
 }
 ```
@@ -14844,7 +14776,7 @@ ggplot(df.annos.crit, aes(x = primer_momento)) +
     color = "black"
   ) +
   labs(x = "Año",
-       y = "Densidad")
+       y = "Densidad") +
 theme_minimal()
 ```
 
@@ -14895,28 +14827,19 @@ Se muestra la razón del fondo de contingencia de la última simulación, visual
 # Se crea un dataframe con los datos
 data.rc <- data.frame(rc = razon.fondo.cont)
 
+# Se quitan los nulos
+data.rc <- as.data.frame(data.rc$rc[which(!is.na(data.rc$rc))])
+
+# Se agrega el índice
+data.rc$indice <- 1:nrow(data.rc)
+
+# Se cambia el nombre de la columna
+colnames(data.rc) <- c("rc", "id")
+
 # Gráfico de las razones del fondo de contingencia
-ggplot(data.rc, aes(x = rc)) +
-  geom_density(aes(y = ..scaled..), color = "#A34022", linewidth = 1.2) +
-  geom_vline(
-    xintercept = mean(razon.fondo.cont),
-    color = "#F59A3A",
-    linetype = "dashed",
-    linewidth = 1
-  ) +
-  annotate(
-    "text",
-    x = mean(razon.fondo.cont),
-    y = 0.7,
-    label = "Media de la RC",
-    color = "#F59A3A",
-    angle = 90,
-    vjust = -0.5,
-    size = 3.5
-  ) +
-  labs(x = "Razón del fondo de contingencia",
-       y = "Densidad") +
-  ylim(0, 1) +
+ggplot(data.rc, aes(x = id, y = rc / 1000000)) +
+  geom_line(color = "#A34022", linewidth = 1) +
+  labs(x = "Año", y = "Razón del fondo de contingencia (Millones)") +
   theme_minimal()
 ```
 
@@ -14945,7 +14868,7 @@ data.ti$indice <- 1:nrow(data.ti)
 # Se cambia el nombre de la columna
 colnames(data.ti) <- c("ti", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las tasas de ingresos
 ggplot(data.ti, aes(x = id, y = ti)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Tasa de ingresos") +
@@ -14977,7 +14900,7 @@ data.pr$indice <- 1:nrow(data.pr)
 # Se cambia el nombre de la columna
 colnames(data.pr) <- c("pr", "id")
 
-# Gráfico de las razones del fondo de contingencia
+# Gráfico de las primas de reparto
 ggplot(data.pr, aes(x = id, y = pr)) +
   geom_line(color = "#A34022", linewidth = 1) +
   labs(x = "Año", y = "Prima de reparto") +
@@ -15030,7 +14953,6 @@ for (i in 1:ncol(matriz.pasivo)) {
 )
 ```
 
-
 Lo anterior se muestra en el siguiente gráfico.
 
 ```{r grafico_balance_as4}
@@ -15045,5 +14967,5 @@ ggplot(df.balance, aes(x = categoria, y = (valor / 1000000000))) +
   theme_minimal()
 ```
 
+Estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
 
-estos se muestran por separado, tal y como menciona el reglamento. Esto representa el promedio del valor presente de todos los activos y pasivos, respectivamente, de los 95 años proyectados.
