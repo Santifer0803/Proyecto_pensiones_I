@@ -2913,7 +2913,7 @@ ggplot(data.pm, aes(x = pm)) +
   annotate(
     "text",
     x = prom.pm,
-    y = 0.75,
+    y = 0.5,
     label = "Promedio de la prima media",
     color = "#F59A3A",
     angle = 90,
@@ -3117,7 +3117,7 @@ Se grafican los activos y pasivos devengados, de forma agregada.
 ```{r balance_devengado}
 # Beneficio devengado con 
 beneficio.devengado.agregado <-
-  data.frame(ben.dev = c(rowMeans(matriz.balance)[1], sum(beneficio.devengado.final[1,])),
+  data.frame(ben.dev = c(rowMeans(matriz.balance)[1], sum(beneficio.devengado.final[, 1])),
              categoria = c("Activo", "Pasivo"))
 
 # Gráfico de beneficios devengados
@@ -3127,7 +3127,7 @@ ggplot(beneficio.devengado.final, aes(x = categoria, y = (ben.dev / 1000000000))
   theme_minimal()
 
 # Razón de solvencia devengada
-rowMeans(matriz.balance)[1] / sum(beneficio.devengado.final[1,])
+rowMeans(matriz.balance)[1] / sum(beneficio.devengado.final[, 1])
 ```
 
 
