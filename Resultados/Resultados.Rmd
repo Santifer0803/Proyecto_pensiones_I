@@ -2727,6 +2727,51 @@ flujo <- data.frame(
 
 # Resultados base
 
+## Proyección demográfica representativa
+
+Se inicia mostrando una proyección demográfica anual, de las personas que están activas, inactivas y pensionadas. Ya que se tiene un modelo estocástico, estas cambiarán en cada escenario, por lo que se muestra de forma representativa y no tiene que seguir necesariamente el comportamiento general del fondo.
+
+```{r proyeccion_demografica_base}
+# Dataframe con los datos por año
+df.proyeccion.demografica <- data.frame(
+  annos = 2025:2119,
+  activos = 0,
+  inactivos = 0,
+  pensionados = 0
+)
+
+# Cantidad de activos por año
+df.proyeccion.demografica[, 2] <-
+  colSums(estados.h == "Activo") + colSums(estados.h == "Posterga") + colSums(estados.m == "Activo") + colSums(estados.m == "Posterga")
+
+# Cantidad de inactivos por año
+df.proyeccion.demografica[, 3] <-
+  colSums(estados.h == "Inactivo") + colSums(estados.m == "Inactivo")
+
+# Cantidad de pensionados por año
+df.proyeccion.demografica[, 4] <-
+  (
+    colSums(matriz.vejez.h > 0) + colSums(matriz.vejez.m > 0) + colSums(matriz.inv.h > 0) + colSums(matriz.inv.m > 0) + colSums(matriz.suc.h > 0) + colSums(matriz.suc.m > 0)
+  )
+
+# Se grafican las curvas correspondientes
+ggplot(df.proyeccion.demografica, aes(x = annos)) +
+  geom_line(aes(y = activos, color = "Activos"), linewidth = 1) +
+  geom_line(aes(y = inactivos, color = "Inactivos"), linewidth = 1) +
+  geom_line(aes(y = pensionados, color = "Pensionados"), linewidth = 1) +
+  scale_color_manual(
+    name = "Estado",
+    values = c(
+      "Activos" = "#A34022",
+      "Inactivos" = "#F59A3A",
+      "Pensionados" = "#DC3440"
+    )
+  ) +
+  labs(x = "Años", y = "Cantidad de personas") +
+  theme_minimal()
+```
+
+
 ## Salarios base
 
 Se grafican los salarios ajustados por inflación.
