@@ -18,6 +18,7 @@ pacman::p_load(data.table,
                purrr,
                readxl,
                tidyverse,
+               xtable,
                zoo)
 ```
 
@@ -2723,6 +2724,9 @@ flujo <- data.frame(
   reserva.fin = reserva[2:length(reserva)] / 1000000
   
 )
+
+# Formato latex
+print(xtable(flujo), type = "latex")
 ```
 
 # Resultados base
