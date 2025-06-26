@@ -2782,8 +2782,7 @@ Se grafican los salarios ajustados por inflación.
 ```{r grafico_cotizantes}
 ggplot(cotizantes.anualizado.VP.largo, aes(x = año, y = salario.ajustado)) +
   geom_line(stat = "summary", fun = mean, color = "steelblue", linewidth = 1) +
-  labs(title = "Comportamiento de salarios ajustados por inflación (1995-2024)",
-       x = "Año",
+  labs(x = "Año",
        y = "Salario ajustado (Valor presente)") +
   theme_minimal()
 ```
@@ -2796,8 +2795,7 @@ curva.mod <- curva.general %>% filter(proyeccion.edad < 116)
 
 ggplot(curva.mod, aes(x = proyeccion.edad, y = salario.promedio)) +
   geom_line(color = "darkgreen", linewidth = 1.2) +
-  labs(title = "Curva salarial general promedio",
-       x = "Edad proyectada",
+  labs(x = "Edad proyectada",
        y = "Salario promedio") +
   theme_minimal()
 ```
@@ -2807,9 +2805,8 @@ Se procede con el cálculo de la curva, pero de manera suavizada.
 ```{r curva_suavizada}
 ggplot(curva.mod, aes(x = proyeccion.edad, y = salario.promedio)) +
   geom_line(color = "darkgreen", alpha = 0.4) +  # línea original, más clara
-  geom_smooth(method = "loess", color = "blue", linewidth = 1.2, se = FALSE) +
-  labs(title = "Curva salarial general suavizada",
-       x = "Edad proyectada",
+  geom_smooth(method = "loess", formula = y ~ x, color = "blue", linewidth = 1.2, se = FALSE) +
+  labs(x = "Edad proyectada",
        y = "Salario promedio") +
   theme_minimal()
 ```
